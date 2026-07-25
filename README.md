@@ -111,10 +111,9 @@ uses `VERCEL_TOKEN` automatically when it is present, which makes it suitable
 for CI; otherwise, the Vercel CLI starts its normal interactive login flow.
 Additional Vercel CLI options can be placed after `--`.
 
-This starter currently uses the Cloudflare-specific Vinext runtime and D1
-database binding. The UI can be sent to Vercel, but the database-backed API
-routes require a Vercel-compatible database adapter before the complete product
-will run there.
+The application uses Neon Postgres through the serverless HTTP driver. Set
+`DATABASE_URL` in the deployment environment before using database-backed API
+routes.
 
 Vercel uses `npm run build:vercel` through `vercel.json` to produce the native
 Next.js `.next` artifact. The existing `npm run build` command remains the
@@ -122,9 +121,8 @@ Cloudflare Sites/Vinext build. Native builds use `tsconfig.vercel.json` so
 Cloudflare-only Worker and example sources are not included in Vercel's
 application type-check.
 
-On Vercel, routes that access assessment data return a configuration error
-until `db/index.ts` is connected to a Vercel-compatible database. The
-Cloudflare deployment continues to use its `DB` D1 binding.
+The database tables and indexes are created automatically on the first API
+request.
 
 Use build and validation commands for targeted diagnosis after a remote failure, not as part of the normal checkpoint path.
 
