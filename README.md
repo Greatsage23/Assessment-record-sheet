@@ -118,7 +118,9 @@ will run there.
 
 Vercel uses `npm run build:vercel` through `vercel.json` to produce the native
 Next.js `.next` artifact. The existing `npm run build` command remains the
-Cloudflare Sites/Vinext build.
+Cloudflare Sites/Vinext build. Native builds use `tsconfig.vercel.json` so
+Cloudflare-only Worker and example sources are not included in Vercel's
+application type-check.
 
 On Vercel, routes that access assessment data return a configuration error
 until `db/index.ts` is connected to a Vercel-compatible database. The
