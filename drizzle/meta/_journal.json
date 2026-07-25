@@ -1,0 +1,41 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1784916005109,
+      "tag": "0000_polite_roulette",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1784916407914,
+      "tag": "0001_cute_puma",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1784932534823,
+      "tag": "0002_stiff_pretty_boy",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1784933734901,
+      "tag": "0003_many_talos",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1784937584363,
+      "tag": "0004_abandoned_clea",
+      "breakpoints": true
+    }
+  ]
+}
