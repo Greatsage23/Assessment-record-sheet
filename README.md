@@ -116,6 +116,10 @@ database binding. The UI can be sent to Vercel, but the database-backed API
 routes require a Vercel-compatible database adapter before the complete product
 will run there.
 
+Vercel uses `npm run build:vercel` through `vercel.json` to produce the native
+Next.js `.next` artifact. The existing `npm run build` command remains the
+Cloudflare Sites/Vinext build.
+
 Use build and validation commands for targeted diagnosis after a remote failure, not as part of the normal checkpoint path.
 
 The timeout defaults can be overridden for a controlled canary with `SITES_INSTALL_TIMEOUT`, `SITES_INSTALL_KILL_AFTER`, `SITES_BUILD_TIMEOUT`, and `SITES_BUILD_KILL_AFTER`. A timeout fails the command; the helpers never retry an unchanged install or build.
