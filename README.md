@@ -98,6 +98,24 @@ actions tied to the current ChatGPT user. Leave public content anonymous.
 - `npm run validate:artifact`: recheck an existing artifact's manifest and ESM `default.fetch` export
 - `npm run db:generate`: generate Drizzle migrations after schema changes
 
+## Vercel deployment
+
+Deploy the current checkout to production with:
+
+```bash
+npm run deploy:vercel
+```
+
+For a preview deployment, run `npm run deploy:vercel -- --preview`. The script
+uses `VERCEL_TOKEN` automatically when it is present, which makes it suitable
+for CI; otherwise, the Vercel CLI starts its normal interactive login flow.
+Additional Vercel CLI options can be placed after `--`.
+
+This starter currently uses the Cloudflare-specific Vinext runtime and D1
+database binding. The UI can be sent to Vercel, but the database-backed API
+routes require a Vercel-compatible database adapter before the complete product
+will run there.
+
 Use build and validation commands for targeted diagnosis after a remote failure, not as part of the normal checkpoint path.
 
 The timeout defaults can be overridden for a controlled canary with `SITES_INSTALL_TIMEOUT`, `SITES_INSTALL_KILL_AFTER`, `SITES_BUILD_TIMEOUT`, and `SITES_BUILD_KILL_AFTER`. A timeout fails the command; the helpers never retry an unchanged install or build.
