@@ -2,6 +2,16 @@ import { drizzle } from "drizzle-orm/d1";
 import * as schema from "./schema";
 
 async function getEnvironment() {
+  if (process.env.VERCEL === "1") {
+    throw new Error(
+      "The database is configured for Cloudflare D1 and is not available on Vercel. Configure a Vercel-compatible database adapter before using assessment data."
+    );
+  }
+
+  // `cloudflare:workers` is a runtime-provided virtual module. It is available
+  // in the Vinext Worker build but intentionally has no Node.js resolution on
+  // Vercel.
+  // @ts-expect-error -- resolved by the Cloudflare Workers runtime
   const workersModule = await import("cloudflare:workers");
   return workersModule.env;
 }
