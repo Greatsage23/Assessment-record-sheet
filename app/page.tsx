@@ -113,6 +113,8 @@ export default function Home() {
   const [passwordForm, setPasswordForm] = useState({ className: "Basic 8 Red", subject: "Mathematics", password: "" });
   const [configuredPasswords, setConfiguredPasswords] = useState<{ className: string; subject: string; updatedAt: string }[]>([]);
   const [authenticationOn, setAuthenticationOn] = useState(false);
+  const [authenticationStatusKnown, setAuthenticationStatusKnown] = useState(false);
+  const [scoreEntryPending, setScoreEntryPending] = useState(false);
   const [teacherForm, setTeacherForm] = useState({ className: "Basic 8 Red", subject: "Mathematics", teacherName: "" });
   const [teacherAssignments, setTeacherAssignments] = useState<{ className: string; subject: string; teacherName: string; updatedAt: string }[]>([]);
   const [selectedTeacher, setSelectedTeacher] = useState("");
@@ -295,6 +297,7 @@ export default function Home() {
     }
     setConfiguredPasswords(data.configured ?? []);
     setAuthenticationOn(Boolean(data.authenticationOn));
+    setAuthenticationStatusKnown(true);
   }
 
   async function toggleAuthentication() {
@@ -305,6 +308,7 @@ export default function Home() {
     const data = await response.json() as { error?: string; authenticationOn?: boolean };
     if (!response.ok) return setMessage(data.error ?? "Authentication mode could not be changed.");
     setAuthenticationOn(Boolean(data.authenticationOn));
+    setAuthenticationStatusKnown(true);
     setMessage(data.authenticationOn ? "Authentication is ON. Teachers must enter the assigned subject password." : "Authentication is OFF. Teachers can enter scores without a password.");
   }
 
@@ -337,24 +341,47 @@ export default function Home() {
   }
 
   async function openScoreEntry() {
+    if (scoreEntryPending) return;
+    if (authenticationStatusKnown && !authenticationOn) {
+      setSubjectPassword("");
+      setModal("scores");
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 10000);
+    setScoreEntryPending(true);
+    setMessage("Checking score-entry access…");
     try {
       const response = await fetch("/api/access", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "subject-login", className: filter.className, subject: filter.subject, subjectPassword: "" }),
+        signal: controller.signal,
       });
       const data = await response.json() as { error?: string; passwordRequired?: boolean };
       setSubjectPassword("");
       if (response.ok && !data.passwordRequired) {
+        setAuthenticationOn(false);
+        setAuthenticationStatusKnown(true);
+        setMessage("");
         setModal("scores");
         return;
       }
       if (data.passwordRequired) {
+        setAuthenticationOn(true);
+        setAuthenticationStatusKnown(true);
+        setMessage("");
         setModal("subjectLogin");
         return;
       }
       setMessage(data.error ?? "Score entry could not be opened.");
-    } catch {
-      setMessage("Score entry could not reach the server. Please try again.");
+    } catch (error) {
+      setMessage(error instanceof DOMException && error.name === "AbortError"
+        ? "Score entry took too long to respond. Please try again."
+        : "Score entry could not reach the server. Please try again.");
+    } finally {
+      window.clearTimeout(timeout);
+      setScoreEntryPending(false);
     }
   }
 
@@ -530,7 +557,7 @@ export default function Home() {
           <label><span>Class</span><select value={filter.className} onChange={(e) => setFilter({ ...filter, className: e.target.value })}>{SCHOOL_CLASSES.map((className) => <option key={className}>{className}</option>)}</select></label>
           <label><span>Subject</span><select value={filter.subject} onChange={(e) => setFilter({ ...filter, subject: e.target.value })}>{JHS_SUBJECTS.map((subject) => <option key={subject}>{subject}</option>)}</select></label>
           <label><span>Term</span><select value={filter.term} onChange={(e) => setFilter({ ...filter, term: e.target.value })}><option>Term 1</option><option>Term 2</option><option>Term 3</option></select></label>
-          {view === "overall" ? <button className="primary" onClick={() => void loadOverallPerformance()}><Icon name="chart" size={19}/>Refresh combined results</button> : view === "administrator" ? <span className="admin-filter-badge">🔒 Administrator controls</span> : <button className="primary" onClick={() => void openScoreEntry()}><Icon name="edit" size={19}/>Enter scores</button>}
+          {view === "overall" ? <button className="primary" onClick={() => void loadOverallPerformance()}><Icon name="chart" size={19}/>Refresh combined results</button> : view === "administrator" ? <span className="admin-filter-badge">🔒 Administrator controls</span> : <button className="primary" onClick={() => void openScoreEntry()} disabled={scoreEntryPending}><Icon name="edit" size={19}/>{scoreEntryPending ? "Checking access…" : "Enter scores"}</button>}
         </div>
         <div className="selected-teacher"><span>Subject teacher</span><strong>{selectedTeacher || "Not assigned"}</strong><small>{filter.subject} · {filter.className}</small></div>
 
