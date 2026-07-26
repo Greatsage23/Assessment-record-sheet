@@ -107,6 +107,7 @@ export default function Home() {
   const [overallLoading, setOverallLoading] = useState(false);
   const [adminPassword, setAdminPassword] = useState("");
   const [adminUnlocked, setAdminUnlocked] = useState(false);
+  const [adminLoginPending, setAdminLoginPending] = useState(false);
   const [adminSection, setAdminSection] = useState<AdminSection>("students");
   const [subjectPassword, setSubjectPassword] = useState("");
   const [passwordForm, setPasswordForm] = useState({ className: "Basic 8 Red", subject: "Mathematics", password: "" });
@@ -232,14 +233,30 @@ export default function Home() {
 
   async function unlockAdministrator(event: FormEvent) {
     event.preventDefault();
-    const response = await fetch("/api/access", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "admin-login", adminPassword }),
-    });
-    if (!response.ok) return setMessage("Incorrect administrator password.");
-    setAdminUnlocked(true);
-    await Promise.all([loadConfiguredPasswords(adminPassword), loadTeacherAssignments(adminPassword)]);
-    setMessage("Administrator access granted.");
+    if (adminLoginPending) return;
+    setAdminLoginPending(true);
+    setMessage("");
+    try {
+      const response = await fetch("/api/access", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "admin-login", adminPassword }),
+      });
+      const data = await response.json() as { error?: string };
+      if (!response.ok) {
+        setMessage(data.error ?? "Administrator login failed.");
+        return;
+      }
+      setAdminUnlocked(true);
+      setMessage("Administrator access granted.");
+      void Promise.allSettled([
+        loadConfiguredPasswords(adminPassword),
+        loadTeacherAssignments(adminPassword),
+      ]);
+    } catch {
+      setMessage("Administrator login could not reach the server. Please try again.");
+    } finally {
+      setAdminLoginPending(false);
+    }
   }
 
   async function loadTeacherAssignments(password = adminPassword) {
@@ -520,7 +537,7 @@ export default function Home() {
         {view === "administrator" && !adminUnlocked && <section className="admin-lock panel">
           <span className="admin-lock-icon">🔐</span><p className="eyebrow">Restricted area</p><h2>Administrator access required</h2>
           <p>Log in to manage the official student list, subject teachers and subject-teacher passwords.</p>
-          <form onSubmit={unlockAdministrator}><label>Password<input type="password" value={adminPassword} onChange={(event) => setAdminPassword(event.target.value)} placeholder="Enter administrator password" autoFocus /></label><button className="primary" type="submit">Login as Administrator</button></form>
+          <form onSubmit={unlockAdministrator}><label>Password<input type="password" value={adminPassword} onChange={(event) => setAdminPassword(event.target.value)} placeholder="Enter administrator password" autoFocus disabled={adminLoginPending} /></label><button className="primary" type="submit" disabled={adminLoginPending}>{adminLoginPending ? "Signing in…" : "Login as Administrator"}</button></form>
         </section>}
 
         {view === "administrator" && adminUnlocked && <section className="attendance-layout">

@@ -12,7 +12,6 @@ async function hashPassword(password: string) {
 
 export async function POST(request: Request) {
   try {
-    await ensureDatabase();
     const payload = await request.json() as {
       action?: "admin-login" | "list" | "set" | "toggle-authentication" | "subject-login";
       adminPassword?: string;
@@ -20,13 +19,15 @@ export async function POST(request: Request) {
       subject?: string;
       subjectPassword?: string;
     };
-    const db = await getDb();
 
     if (payload.action === "admin-login") {
       return payload.adminPassword === ADMIN_PASSWORD
         ? Response.json({ ok: true })
         : Response.json({ error: "Incorrect administrator password." }, { status: 401 });
     }
+
+    await ensureDatabase();
+    const db = await getDb();
 
     if (payload.action === "subject-login") {
       const [setting] = await db.select().from(appMeta).where(eq(appMeta.key, "subject_authentication")).limit(1);
