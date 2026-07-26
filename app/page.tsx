@@ -288,10 +288,13 @@ export default function Home() {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "list", adminPassword: password }),
     });
-    if (!response.ok) return;
-    const data = await response.json() as { configured: { className: string; subject: string; updatedAt: string }[]; authenticationOn: boolean };
-    setConfiguredPasswords(data.configured);
-    setAuthenticationOn(data.authenticationOn);
+    const data = await response.json() as { error?: string; configured?: { className: string; subject: string; updatedAt: string }[]; authenticationOn?: boolean };
+    if (!response.ok) {
+      setMessage(data.error ?? "Authentication settings could not be loaded.");
+      return;
+    }
+    setConfiguredPasswords(data.configured ?? []);
+    setAuthenticationOn(Boolean(data.authenticationOn));
   }
 
   async function toggleAuthentication() {
@@ -334,17 +337,25 @@ export default function Home() {
   }
 
   async function openScoreEntry() {
-    const response = await fetch("/api/access", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "subject-login", className: filter.className, subject: filter.subject, subjectPassword: "" }),
-    });
-    if (response.ok) {
+    try {
+      const response = await fetch("/api/access", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "subject-login", className: filter.className, subject: filter.subject, subjectPassword: "" }),
+      });
+      const data = await response.json() as { error?: string; passwordRequired?: boolean };
       setSubjectPassword("");
-      setModal("scores");
-      return;
+      if (response.ok && !data.passwordRequired) {
+        setModal("scores");
+        return;
+      }
+      if (data.passwordRequired) {
+        setModal("subjectLogin");
+        return;
+      }
+      setMessage(data.error ?? "Score entry could not be opened.");
+    } catch {
+      setMessage("Score entry could not reach the server. Please try again.");
     }
-    setSubjectPassword("");
-    setModal("subjectLogin");
   }
 
   async function addRosterStudents(studentsToAdd: { name: string }[]) {
