@@ -29,6 +29,8 @@ type ReportDetails = {
   participation: string;
   teacherComment: string;
   headteacherComment: string;
+  classTeacherName: string;
+  headteacherName: string;
 };
 
 const SCHOOL_NAME = "1st November 1954 J.H.S.";
@@ -136,6 +138,8 @@ export default function Home() {
     participation: "Very Good",
     teacherComment: "",
     headteacherComment: "",
+    classTeacherName: "",
+    headteacherName: "",
   });
 
   const loadStudents = useCallback(async () => {
@@ -693,6 +697,7 @@ function ReportCard({ records, studentCode, onStudentChange, filter, details, on
   }).sort((a, b) => b.average - a.average);
   const classPosition = learnerAverages.findIndex((item) => item.code === learner?.studentCode) + 1;
   const daysAbsent = Math.max(0, details.daysOpened - details.daysPresent);
+  const generatedDate = new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "long", year: "numeric" }).format(new Date());
 
   function update<K extends keyof ReportDetails>(key: K, value: ReportDetails[K]) {
     onDetailsChange({ ...details, [key]: value });
@@ -722,29 +727,31 @@ function ReportCard({ records, studentCode, onStudentChange, filter, details, on
     <article className="student-report-card" aria-label="Student report card">
       <header className="report-card-header">
         <img className="report-card-logo" src="/ghana-coat-of-arms.png" alt="Ghana coat of arms" />
-        <div>
+        <div className="report-school-identity">
           <h2>{SCHOOL_NAME}</h2>
-          <div className="school-contact"><span>●</span><input aria-label="School address" value={details.address} onChange={(event) => update("address", event.target.value)} /></div>
-          <div className="school-contact"><span>☎</span><input aria-label="School contact details" value={details.contact} onChange={(event) => update("contact", event.target.value)} placeholder="Tel: __________  |  Email: ____________________" /></div>
+          <div className="school-contact"><input aria-label="School address" value={details.address} onChange={(event) => update("address", event.target.value)} /></div>
+          <div className="school-contact"><span>Tel:</span><input aria-label="School contact details" value={details.contact} onChange={(event) => update("contact", event.target.value)} /></div>
+          <p>LORD INCREASE ME IN KNOWLEDGE.</p>
         </div>
         <img className="report-card-logo school-report-logo" src="/school-logo.png" alt="1st November 1954 JHS school crest" />
       </header>
+      <div className="ghana-header-stripe" aria-hidden="true" />
 
       <div className="report-heading-row">
-        <h3 className="report-title"><span>🎓</span> Student Report Card <b>★ ★ ★</b></h3>
-        <div className="report-period"><label>Academic year<input value={details.academicYear} onChange={(event) => update("academicYear", event.target.value)} /></label><strong>{filter.term}</strong></div>
+        <h3 className="report-title">Student Report Card</h3>
+        <div className="report-period"><label>Academic year<input value={details.academicYear} onChange={(event) => update("academicYear", event.target.value)} /></label><label>Term<strong>{filter.term}</strong></label></div>
       </div>
 
-      <h4 className="floating-section-title student-title"><span>●</span> Student Information</h4>
+      <h4 className="floating-section-title student-title">Student Information</h4>
       <section className="report-info-grid">
-        <label><span className="info-icon blue">●</span>Student name<strong>{learner?.name ?? "—"}</strong></label>
-        <label><span className="info-icon cyan">⚥</span>Gender<select value={details.gender} onChange={(event) => update("gender", event.target.value)}><option value="">Select</option><option>Male</option><option>Female</option></select></label>
-        <label><span className="info-icon blue">◉</span>Student ID / Index no.<strong>{learner?.studentCode ?? "—"}</strong></label>
-        <label><span className="info-icon purple">◆</span>Class / Grade / Programme<strong>{filter.className} · JHS</strong></label>
+        <label><span>Student name</span><strong>{learner?.name ?? "—"}</strong></label>
+        <label><span>Student ID / Index no.</span><strong>{learner?.studentCode ?? "—"}</strong></label>
+        <label><span>Gender</span><select value={details.gender} onChange={(event) => update("gender", event.target.value)}><option value="">—</option><option>Male</option><option>Female</option></select></label>
+        <label><span>Class / Grade / Programme</span><strong>{filter.className} · JHS</strong></label>
       </section>
 
       <section className="report-section academic-section">
-        <h4><span>▥</span> Academic Performance</h4>
+        <h4>Academic Performance</h4>
         <table className="report-performance-table"><thead><tr><th>Subject</th><th>Class Score<br/>(30%)</th><th>Exam Score<br/>(70%)</th><th>Total<br/>(100%)</th><th>Grade</th><th>Position</th><th>Teacher&apos;s Remarks</th></tr></thead>
           <tbody>{JHS_SUBJECTS.map((subject) => {
             const record = records.find((item) => item.studentCode === learner?.studentCode && item.subject === subject);
@@ -756,21 +763,20 @@ function ReportCard({ records, studentCode, onStudentChange, filter, details, on
       </section>
 
       <div className="report-dashboard">
-        <section className="report-section report-summary"><h4><span>★</span> Performance Summary</h4><div><label>Total marks obtained<strong>{totalMarks} / {learnerRecords.length * 100}</strong></label><label>Average score<strong>{averageScore}%</strong></label><label>Overall grade<strong className={`summary-grade report-grade-${gradeFor(averageScore).toLowerCase()}`}>{gradeFor(averageScore)}</strong></label><label>Class position<strong>{classPosition || "—"} of {learners.length}</strong></label></div></section>
-        <section className="report-section attendance-section"><h4><span>▦</span> Attendance Record</h4><table className="compact-report-table"><tbody><tr><td>Days school opened</td><td><input type="number" min="0" value={details.daysOpened} onChange={(event) => update("daysOpened", Number(event.target.value))}/></td></tr><tr><td>Days present</td><td><input type="number" min="0" max={details.daysOpened} value={details.daysPresent} onChange={(event) => update("daysPresent", Number(event.target.value))}/></td></tr><tr><td>Days absent</td><td><strong>{daysAbsent}</strong></td></tr></tbody></table></section>
-        <section className="report-section conduct-section"><h4><span>●●●</span> Conduct &amp; Skills Assessment</h4><div className="conduct-grid">{([
+        <section className="report-section report-summary"><h4>Performance Summary</h4><div><label>Total marks obtained<strong>{totalMarks} / {learnerRecords.length * 100}</strong></label><label className="summary-highlight">Average score<strong>{averageScore}%</strong></label><label>Overall grade<strong className={`summary-grade report-grade-${gradeFor(averageScore).toLowerCase()}`}>{gradeFor(averageScore)}</strong></label><label>Class position<strong>{classPosition || "—"} of {learners.length}</strong></label><label>Total students<strong>{learners.length}</strong></label></div></section>
+        <section className="report-section attendance-section"><h4>Attendance Record</h4><table className="compact-report-table"><tbody><tr><td>Days school opened</td><td><input type="number" min="0" value={details.daysOpened} onChange={(event) => update("daysOpened", Number(event.target.value))}/></td></tr><tr><td>Days present</td><td><input type="number" min="0" max={details.daysOpened} value={details.daysPresent} onChange={(event) => update("daysPresent", Number(event.target.value))}/></td></tr><tr><td>Days absent</td><td><strong>{daysAbsent}</strong></td></tr></tbody></table></section>
+        <section className="report-section conduct-section"><h4>Conduct &amp; Skills Assessment</h4><div className="conduct-grid">{([
           ["Behaviour", "behaviour"], ["Punctuality", "punctuality"], ["Attitude to learning", "attitude"], ["Class participation", "participation"],
-        ] as [string, keyof ReportDetails][]).map(([label, key]) => <label key={key}><span>{label}</span><select value={String(details[key])} onChange={(event) => update(key, event.target.value as never)}>{ratingOptions.map((option) => <option key={option}>{option}</option>)}</select><b aria-hidden="true">{details[key] === "Excellent" ? "★★★★★" : details[key] === "Very Good" ? "★★★★☆" : details[key] === "Good" ? "★★★☆☆" : "★★☆☆☆"}</b></label>)}</div></section>
+        ] as [string, keyof ReportDetails][]).map(([label, key]) => <label key={key}><span>{label}</span><select value={String(details[key])} onChange={(event) => update(key, event.target.value as never)}>{ratingOptions.map((option) => <option key={option}>{option}</option>)}</select></label>)}</div></section>
       </div>
 
       <div className="report-lower">
-        <section className="report-section grading-section"><h4><span>▤</span> Grading System</h4><table className="compact-report-table"><tbody><tr><td><b>A</b></td><td>80–100</td><td>Excellent</td></tr><tr><td><b>B</b></td><td>70–79</td><td>Very Good</td></tr><tr><td><b>C</b></td><td>60–69</td><td>Good</td></tr><tr><td><b>D</b></td><td>50–59</td><td>Satisfactory</td></tr><tr><td><b>F</b></td><td>0–49</td><td>Needs Improvement</td></tr></tbody></table></section>
-        <section className="report-section comments-section"><h4><span>▣</span> Remarks</h4><div><label>Class teacher&apos;s comment<textarea value={details.teacherComment} onChange={(event) => update("teacherComment", event.target.value)} placeholder="Enter the class teacher's comment"/></label><label>Headteacher&apos;s comment<textarea value={details.headteacherComment} onChange={(event) => update("headteacherComment", event.target.value)} placeholder="Enter the headteacher's comment"/></label></div></section>
+        <section className="report-section grading-section"><h4>Grading Scale</h4><table className="compact-report-table"><tbody><tr><td><b>A</b></td><td>80–100</td><td>Excellent</td></tr><tr><td><b>B</b></td><td>70–79</td><td>Very Good</td></tr><tr><td><b>C</b></td><td>60–69</td><td>Good</td></tr><tr><td><b>D</b></td><td>50–59</td><td>Satisfactory</td></tr><tr><td><b>F</b></td><td>0–49</td><td>Needs Improvement</td></tr></tbody></table></section>
+        <section className="report-section comments-section"><h4>Comments &amp; Remarks</h4><div><label>Class teacher&apos;s comment<textarea value={details.teacherComment} onChange={(event) => update("teacherComment", event.target.value)} placeholder="Enter the class teacher's comment"/><span className="print-comment">{details.teacherComment || "—"}</span></label><label>Headteacher&apos;s comment<textarea value={details.headteacherComment} onChange={(event) => update("headteacherComment", event.target.value)} placeholder="Enter the headteacher's comment"/><span className="print-comment">{details.headteacherComment || "—"}</span></label></div></section>
       </div>
 
-      <footer className="signature-grid"><div><strong>✎</strong><span>Class Teacher</span><i>Signature: __________________</i><i>Date: _____________________</i></div><div><strong>♟</strong><span>Headteacher</span><i>Signature: __________________</i><i>Official Stamp</i></div></footer>
-      <div className="report-motto"><span>Discipline</span><b>Knowledge</b><span>Service</span></div>
-      <div className="ghana-footer-stripe"/>
+      <section className="signature-grid" aria-label="Report approval signatures"><div><label>Class teacher&apos;s name<input value={details.classTeacherName} onChange={(event) => update("classTeacherName", event.target.value)} placeholder="Name" /></label><span>Class teacher&apos;s signature</span><span>Date</span></div><div><label>Headteacher&apos;s name<input value={details.headteacherName} onChange={(event) => update("headteacherName", event.target.value)} placeholder="Name" /></label><span>Headteacher&apos;s signature</span><span>Official stamp</span><span>Date</span></div></section>
+      <footer className="report-card-footer"><span>Lord Increase Me in Knowledge</span><span>Generated {generatedDate}</span><span>Page 1</span></footer>
     </article>
   </div>;
 }
