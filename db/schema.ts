@@ -64,3 +64,19 @@ export const subjectTeachers = pgTable("subject_teachers", {
 }, (table) => [
   uniqueIndex("subject_teacher_class_idx").on(table.className, table.subject),
 ]);
+
+export const questionBank = pgTable("question_bank", {
+  id: serial("id").primaryKey(),
+  className: text("class_name").notNull(),
+  subject: text("subject").notNull(),
+  term: text("term").notNull(),
+  topic: text("topic").notNull(),
+  questionType: text("question_type").notNull(),
+  difficulty: text("difficulty").notNull(),
+  questionText: text("question_text").notNull(),
+  options: text("options").notNull().default("[]"),
+  answer: text("answer").notNull(),
+  marks: integer("marks").notNull().default(1),
+  createdBy: text("created_by").notNull().default("Subject teacher"),
+  ...timestamps(),
+});

@@ -2,6 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import SchemeOfWork from "./scheme-of-work";
+import QuestionBank from "./question-bank";
 
 type Student = {
   id: number;
@@ -16,7 +17,7 @@ type Student = {
 };
 type RosterStudent = { id: number; studentCode: string; name: string; className: string };
 
-type View = "dashboard" | "scorebook" | "administrator" | "schemes" | "reports" | "overall" | "settings";
+type View = "dashboard" | "scorebook" | "administrator" | "schemes" | "questions" | "reports" | "overall" | "settings";
 type AdminSection = "students" | "teachers" | "passwords" | "schemes";
 type ReportDetails = {
   academicYear: string;
@@ -56,6 +57,7 @@ const navItems: { id: View; label: string; icon: string }[] = [
   { id: "scorebook", label: "Scorebook", icon: "book" },
   { id: "administrator", label: "Administrator", icon: "settings" },
   { id: "schemes", label: "Scheme of Work", icon: "book" },
+  { id: "questions", label: "Questions", icon: "question" },
   { id: "reports", label: "Reports", icon: "chart" },
   { id: "overall", label: "Overall Performance", icon: "chart" },
   { id: "settings", label: "Settings", icon: "settings" },
@@ -77,6 +79,7 @@ function Icon({ name, size = 22 }: { name: string; size?: number }) {
     bell: <><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></>,
     trophy: <><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0z"/><path d="M7 6H4v2a4 4 0 0 0 4 4M17 6h3v2a4 4 0 0 1-4 4"/></>,
     alert: <><path d="M10.3 2.9 1.8 17a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 2.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></>,
+    question: <><path d="M9.1 9a3 3 0 1 1 5.2 2c-1.2 1.2-2.3 1.7-2.3 3"/><path d="M12 18h.01"/><circle cx="12" cy="12" r="9"/></>,
   };
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg>;
 }
@@ -537,7 +540,7 @@ export default function Home() {
     }
   }
 
-  const pageTitle = ({ dashboard: "Assessment Overview", scorebook: "Assessment Record", administrator: "Administrator", schemes: "Scheme of Work", reports: "Performance Report", overall: "Combined Grade Performance", settings: "Assessment Settings" } as Record<View, string>)[view];
+  const pageTitle = ({ dashboard: "Assessment Overview", scorebook: "Assessment Record", administrator: "Administrator", schemes: "Scheme of Work", questions: "Questions", reports: "Performance Report", overall: "Combined Grade Performance", settings: "Assessment Settings" } as Record<View, string>)[view];
 
   return (
     <main className="app-shell">
@@ -565,13 +568,13 @@ export default function Home() {
 
         <div className="page-intro"><p className="eyebrow">Academic workspace</p><h1>{pageTitle}</h1>{view === "dashboard" && <p>Manage student records, scores and academic performance.</p>}</div>
 
-        {view !== "schemes" && <div className="filter-panel"><div className="filter-panel-heading"><span>Current assessment</span><small>Choose the class, subject and term to update this workspace.</small></div><div className="filters">
+        {view !== "schemes" && view !== "questions" && <div className="filter-panel"><div className="filter-panel-heading"><span>Current assessment</span><small>Choose the class, subject and term to update this workspace.</small></div><div className="filters">
           <label><span>Class</span><select value={filter.className} onChange={(e) => setFilter({ ...filter, className: e.target.value })}>{SCHOOL_CLASSES.map((className) => <option key={className}>{className}</option>)}</select></label>
           <label><span>Subject</span><select value={filter.subject} onChange={(e) => setFilter({ ...filter, subject: e.target.value })}>{JHS_SUBJECTS.map((subject) => <option key={subject}>{subject}</option>)}</select></label>
           <label><span>Term</span><select value={filter.term} onChange={(e) => setFilter({ ...filter, term: e.target.value })}><option>Term 1</option><option>Term 2</option><option>Term 3</option></select></label>
           {view === "overall" ? <button className="primary" onClick={() => void loadOverallPerformance()}><Icon name="chart" size={19}/>Refresh combined results</button> : view === "administrator" ? <span className="admin-filter-badge">🔒 Administrator controls</span> : <button className="primary" onClick={() => void openScoreEntry()} disabled={scoreEntryPending}><Icon name="edit" size={19}/>{scoreEntryPending ? "Checking access…" : "Enter scores"}</button>}
         </div></div>}
-        {view !== "schemes" && <div className="selected-teacher"><span>Subject teacher</span><strong>{selectedTeacher || "Not assigned"}</strong><small>{filter.subject} · {filter.className}</small></div>}
+        {view !== "schemes" && view !== "questions" && <div className="selected-teacher"><span>Subject teacher</span><strong>{selectedTeacher || "Not assigned"}</strong><small>{filter.subject} · {filter.className}</small></div>}
 
         {message && <div className="toast" role="status">{message}<button onClick={() => setMessage("")} aria-label="Dismiss"><Icon name="close" size={16}/></button></div>}
 
@@ -593,6 +596,7 @@ export default function Home() {
         </>}
 
         {view === "schemes" && <SchemeOfWork />}
+        {view === "questions" && <QuestionBank />}
 
         {view === "administrator" && !adminUnlocked && <section className="admin-lock panel">
           <span className="admin-lock-icon">🔐</span><p className="eyebrow">Restricted area</p><h2>Administrator access required</h2>

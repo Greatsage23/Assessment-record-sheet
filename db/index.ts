@@ -95,6 +95,24 @@ async function initializeDatabase() {
   )`;
   await sql`CREATE UNIQUE INDEX IF NOT EXISTS subject_teacher_class_idx
     ON subject_teachers (class_name, subject)`;
+  await sql`CREATE TABLE IF NOT EXISTS question_bank (
+    id SERIAL PRIMARY KEY,
+    class_name TEXT NOT NULL,
+    subject TEXT NOT NULL,
+    term TEXT NOT NULL,
+    topic TEXT NOT NULL,
+    question_type TEXT NOT NULL,
+    difficulty TEXT NOT NULL,
+    question_text TEXT NOT NULL,
+    options TEXT DEFAULT '[]' NOT NULL,
+    answer TEXT NOT NULL,
+    marks INTEGER DEFAULT 1 NOT NULL,
+    created_by TEXT DEFAULT 'Subject teacher' NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
+  )`;
+  await sql`CREATE INDEX IF NOT EXISTS question_bank_scope_idx
+    ON question_bank (class_name, subject, term)`;
   await sql`CREATE TABLE IF NOT EXISTS schemes_of_work (
     id SERIAL PRIMARY KEY,
     title TEXT NOT NULL,
