@@ -126,8 +126,8 @@ export default function Home() {
   const [reportDetails, setReportDetails] = useState<ReportDetails>({
     academicYear: "2026/2027",
     gender: "",
-    address: "Tamale, Northern Region, Ghana",
-    contact: "",
+    address: "Box 184 E/R Tamale",
+    contact: "0244138609",
     daysOpened: 60,
     daysPresent: 0,
     behaviour: "Very Good",
