@@ -22,8 +22,8 @@ button { cursor:pointer; }
 .sidebar-foot { margin-top:auto; padding:21px 14px 0; display:flex; align-items:center; gap:12px; border-top:1px solid #365078; color:#cbd5e1; font-size:14px; }
 .help-dot { width:27px; height:27px; display:grid; place-items:center; border:1px solid #93a4be; border-radius:50%; font-weight:700; }
 .workspace { grid-column:2; min-width:0; padding:0 38px 48px; }
-.topbar { min-height:76px;margin:0 -38px 25px;padding:10px 38px;display:flex;align-items:center;justify-content:space-between;gap:24px;border-bottom:1px solid var(--border);background:rgba(255,255,255,.92); }
-.topbar-identity{display:flex;align-items:center;gap:12px}.topbar-identity>img{width:48px;height:48px;object-fit:contain}.topbar-identity>div{display:grid;gap:2px}.topbar-identity>div>span{color:var(--muted);font-size:11px;font-weight:600}
+.topbar { min-height:88px;margin:0 -38px 25px;padding:10px 38px;display:flex;align-items:center;justify-content:space-between;gap:24px;border-bottom:1px solid var(--border);background:rgba(255,255,255,.92); }
+.topbar-identity{display:flex;align-items:center;gap:14px}.topbar-identity>img{width:68px;height:68px;object-fit:contain}.topbar-identity>div{display:grid;gap:2px}.topbar-identity>div>span{color:var(--muted);font-size:11px;font-weight:600}
 .school-dashboard-name { margin:0;color:#073f28;font-size:clamp(16px,1.5vw,21px);font-weight:900;line-height:1.05;letter-spacing:-.3px;text-transform:uppercase; }
 .page-intro{margin-bottom:20px}.page-intro h1{font-size:30px;letter-spacing:-1px}.page-intro>p:last-child{margin:7px 0 0;color:var(--muted);font-size:14px}
 .eyebrow { margin:0 0 5px; color:#4f46e5; font-size:12px; font-weight:750; letter-spacing:.1em; text-transform:uppercase; }
@@ -305,7 +305,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 }
 @media (max-width:1180px){.metrics{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:1050px){.topbar{margin-inline:-25px;padding-inline:25px}.sidebar-logo{width:42px;height:42px}.dashboard-insights{grid-template-columns:1fr}}
-@media (max-width:760px){.topbar{min-height:68px;margin:-22px -16px 20px;padding:9px 16px}.topbar-identity>img{width:42px;height:42px}.school-dashboard-name{font-size:14px}.topbar-identity>div>span{font-size:9px}.page-intro h1{font-size:25px}.filter-panel{padding:14px}.filter-panel-heading{display:grid;gap:3px}.metrics{grid-template-columns:1fr 1fr}.metrics article{min-height:112px;padding:15px;gap:11px}.metric-icon{width:40px;height:40px}.metrics strong{font-size:25px}.selected-teacher{grid-template-columns:1fr}.selected-teacher small{grid-column:1}.toast{top:75px;left:14px;right:14px}.dashboard-insights{grid-template-columns:1fr}.score-panel .panel-head{align-items:flex-start}.record-count{white-space:nowrap}}
+@media (max-width:760px){.topbar{min-height:76px;margin:-22px -16px 20px;padding:8px 16px}.topbar-identity>img{width:58px;height:58px}.school-dashboard-name{font-size:14px}.topbar-identity>div>span{font-size:9px}.page-intro h1{font-size:25px}.filter-panel{padding:14px}.filter-panel-heading{display:grid;gap:3px}.metrics{grid-template-columns:1fr 1fr}.metrics article{min-height:112px;padding:15px;gap:11px}.metric-icon{width:40px;height:40px}.metrics strong{font-size:25px}.selected-teacher{grid-template-columns:1fr}.selected-teacher small{grid-column:1}.toast{top:82px;left:14px;right:14px}.dashboard-insights{grid-template-columns:1fr}.score-panel .panel-head{align-items:flex-start}.record-count{white-space:nowrap}}
 @media (max-width:480px){.metrics{grid-template-columns:1fr}.metrics article{min-height:96px}.topbar-identity>div>span{display:none}.profile{margin-left:0}.sidebar nav{gap:1px}.nav-item{padding:9px 5px}}
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
 @page { size:A4 portrait; margin:12mm; }
