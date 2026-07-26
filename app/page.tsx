@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import SchemeOfWork from "./scheme-of-work";
 
 type Student = {
   id: number;
@@ -14,8 +15,8 @@ type Student = {
 };
 type RosterStudent = { id: number; studentCode: string; name: string; className: string };
 
-type View = "dashboard" | "scorebook" | "administrator" | "reports" | "overall" | "settings";
-type AdminSection = "students" | "teachers" | "passwords";
+type View = "dashboard" | "scorebook" | "administrator" | "schemes" | "reports" | "overall" | "settings";
+type AdminSection = "students" | "teachers" | "passwords" | "schemes";
 type ReportDetails = {
   academicYear: string;
   gender: string;
@@ -53,6 +54,7 @@ const navItems: { id: View; label: string; icon: string }[] = [
   { id: "dashboard", label: "Dashboard", icon: "grid" },
   { id: "scorebook", label: "Scorebook", icon: "book" },
   { id: "administrator", label: "Administrator", icon: "settings" },
+  { id: "schemes", label: "Scheme of Work", icon: "book" },
   { id: "reports", label: "Reports", icon: "chart" },
   { id: "overall", label: "Overall Performance", icon: "chart" },
   { id: "settings", label: "Settings", icon: "settings" },
@@ -528,7 +530,7 @@ export default function Home() {
     }
   }
 
-  const pageTitle = ({ dashboard: "Class Overview", scorebook: "Assessment Record", administrator: "Administrator", reports: "Performance Report", overall: "Combined Grade Performance", settings: "Assessment Settings" } as Record<View, string>)[view];
+  const pageTitle = ({ dashboard: "Class Overview", scorebook: "Assessment Record", administrator: "Administrator", schemes: "Scheme of Work", reports: "Performance Report", overall: "Combined Grade Performance", settings: "Assessment Settings" } as Record<View, string>)[view];
 
   return (
     <main className="app-shell">
@@ -557,13 +559,13 @@ export default function Home() {
           </div>
         </header>
 
-        <div className="filters">
+        {view !== "schemes" && <div className="filters">
           <label><span>Class</span><select value={filter.className} onChange={(e) => setFilter({ ...filter, className: e.target.value })}>{SCHOOL_CLASSES.map((className) => <option key={className}>{className}</option>)}</select></label>
           <label><span>Subject</span><select value={filter.subject} onChange={(e) => setFilter({ ...filter, subject: e.target.value })}>{JHS_SUBJECTS.map((subject) => <option key={subject}>{subject}</option>)}</select></label>
           <label><span>Term</span><select value={filter.term} onChange={(e) => setFilter({ ...filter, term: e.target.value })}><option>Term 1</option><option>Term 2</option><option>Term 3</option></select></label>
           {view === "overall" ? <button className="primary" onClick={() => void loadOverallPerformance()}><Icon name="chart" size={19}/>Refresh combined results</button> : view === "administrator" ? <span className="admin-filter-badge">🔒 Administrator controls</span> : <button className="primary" onClick={() => void openScoreEntry()} disabled={scoreEntryPending}><Icon name="edit" size={19}/>{scoreEntryPending ? "Checking access…" : "Enter scores"}</button>}
-        </div>
-        <div className="selected-teacher"><span>Subject teacher</span><strong>{selectedTeacher || "Not assigned"}</strong><small>{filter.subject} · {filter.className}</small></div>
+        </div>}
+        {view !== "schemes" && <div className="selected-teacher"><span>Subject teacher</span><strong>{selectedTeacher || "Not assigned"}</strong><small>{filter.subject} · {filter.className}</small></div>}
 
         {message && <div className="toast" role="status">{message}<button onClick={() => setMessage("")} aria-label="Dismiss"><Icon name="close" size={16}/></button></div>}
 
@@ -573,8 +575,11 @@ export default function Home() {
             <article><span className="metric-icon green"><Icon name="chart" size={29}/></span><div><strong>{average}%</strong><span>Class average</span></div></article>
             <article><span className="metric-icon emerald">✓</span><div><strong>{passRate}%</strong><span>Pass rate</span></div></article>
           </section>
+          {view === "dashboard" && <button className="scheme-dashboard-cta" onClick={() => setView("schemes")}><Icon name="book" size={22}/><span><strong>View Scheme of Work</strong><small>Browse approved curriculum documents by level, term and subject.</small></span></button>}
           <ScoreTable students={visible} loading={loading} />
         </>}
+
+        {view === "schemes" && <SchemeOfWork />}
 
         {view === "administrator" && !adminUnlocked && <section className="admin-lock panel">
           <span className="admin-lock-icon">🔐</span><p className="eyebrow">Restricted area</p><h2>Administrator access required</h2>
@@ -584,7 +589,7 @@ export default function Home() {
 
         {view === "administrator" && adminUnlocked && <section className="attendance-layout">
           <div className="attendance-banner"><div><p>Administrator only</p><h2>School Administration</h2><span>Manage the student list, subject teachers and teacher access passwords.</span></div><button className="secondary" onClick={() => { setAdminUnlocked(false); setAdminPassword(""); setAdminSection("students"); }}>Logout administrator</button></div>
-          <div className="admin-section-tabs"><button className={adminSection === "students" ? "active" : ""} onClick={() => setAdminSection("students")}><Icon name="users" size={19}/>Student List</button><button className={adminSection === "teachers" ? "active" : ""} onClick={() => setAdminSection("teachers")}><Icon name="users" size={19}/>Subject Teachers</button><button className={adminSection === "passwords" ? "active" : ""} onClick={() => setAdminSection("passwords")}>🔑 Password</button></div>
+          <div className="admin-section-tabs"><button className={adminSection === "students" ? "active" : ""} onClick={() => setAdminSection("students")}><Icon name="users" size={19}/>Student List</button><button className={adminSection === "teachers" ? "active" : ""} onClick={() => setAdminSection("teachers")}><Icon name="users" size={19}/>Subject Teachers</button><button className={adminSection === "passwords" ? "active" : ""} onClick={() => setAdminSection("passwords")}>🔑 Password</button><button className={adminSection === "schemes" ? "active" : ""} onClick={() => setAdminSection("schemes")}><Icon name="book" size={19}/>Scheme of Work</button></div>
           {adminSection === "students" && <>
           <section className="panel roster-tools">
             <div className="panel-head"><div><h2>Add or upload students</h2><p>{filter.className} · The official roster shared by every subject teacher</p></div></div>
@@ -634,6 +639,7 @@ export default function Home() {
               <div>{configuredPasswords.length === 0 ? <p className="empty-passwords">No subject passwords have been assigned yet.</p> : configuredPasswords.map((item) => <article key={`${item.className}-${item.subject}`}><span>✓</span><div><strong>{item.subject}</strong><small>{item.className}</small></div><em>Protected</em></article>)}</div>
             </section>
           </section>}
+          {adminSection === "schemes" && <SchemeOfWork administrator adminPassword={adminPassword} />}
         </section>}
 
         {view === "reports" && <section className="report-layout">

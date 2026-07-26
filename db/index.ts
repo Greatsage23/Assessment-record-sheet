@@ -32,6 +32,10 @@ export async function getDb() {
   return getClients().database;
 }
 
+export async function getSql() {
+  return getClients().sql;
+}
+
 async function initializeDatabase() {
   const { sql } = getClients();
 
@@ -91,6 +95,24 @@ async function initializeDatabase() {
   )`;
   await sql`CREATE UNIQUE INDEX IF NOT EXISTS subject_teacher_class_idx
     ON subject_teachers (class_name, subject)`;
+  await sql`CREATE TABLE IF NOT EXISTS schemes_of_work (
+    id SERIAL PRIMARY KEY,
+    title TEXT NOT NULL,
+    subject TEXT NOT NULL,
+    level TEXT NOT NULL,
+    term TEXT NOT NULL,
+    academic_year TEXT NOT NULL,
+    file_name TEXT NOT NULL,
+    file_type TEXT NOT NULL,
+    mime_type TEXT NOT NULL,
+    file_size INTEGER NOT NULL,
+    file_data TEXT NOT NULL,
+    uploaded_by TEXT DEFAULT 'Administrator' NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
+  )`;
+  await sql`CREATE UNIQUE INDEX IF NOT EXISTS scheme_work_scope_idx
+    ON schemes_of_work (academic_year, term, level, subject)`;
   await sql`DELETE FROM student_attendance
     WHERE NOT EXISTS (SELECT 1 FROM app_meta WHERE key = 'full_assessment_cleanup_v1')`;
   await sql`DELETE FROM assessment_records
