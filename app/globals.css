@@ -152,9 +152,10 @@ td small { color:#8290a3; font-size:11px; }
 .student-report-card { position:relative; width:210mm; min-height:297mm; margin:0 auto; padding:6mm 7mm 10mm; overflow:hidden; color:#111827; border:1px solid #d7ddca; background:linear-gradient(135deg,rgba(255,247,214,.38),transparent 24%),#fff; box-shadow:0 14px 50px rgba(15,31,61,.18); font-family:Arial,Helvetica,sans-serif; font-size:10px; }
 .student-report-card::before { content:"★"; position:absolute; top:0; left:7mm; right:7mm; height:2.2mm; color:#111; border-radius:0 0 6px 6px; background:linear-gradient(90deg,#d71920 0 32%,#f5c400 32% 66%,#006b3f 66%); font-size:11px; line-height:8px; text-align:center; }
 .report-card-header { display:grid; grid-template-columns:24mm 1fr 24mm; align-items:center; gap:4mm; margin-top:3mm; padding:1.5mm 2mm 2.5mm; text-align:center; }
+.report-card-logo { width:24mm; height:22mm; display:block; object-fit:contain; object-position:center; print-color-adjust:exact; -webkit-print-color-adjust:exact; }
 .logo-placeholder { width:21mm; height:21mm; display:grid; place-content:center; gap:2px; border:2px solid currentColor; border-radius:50%; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,.09); }
 .logo-placeholder strong { font-size:13px; }.logo-placeholder span{max-width:18mm;font-size:6px;font-weight:700;line-height:1.2;text-transform:uppercase}
-.ges-logo { color:#a57b00; background:radial-gradient(circle,#fff8d5,#f3d56f); }.school-logo{color:#f5c400;background:radial-gradient(circle,#087a42,#004d2e)}
+.school-logo{color:#f5c400;background:radial-gradient(circle,#087a42,#004d2e)}
 .report-card-header h2 { margin:0 0 3px; color:#075b2c; font-size:22px; line-height:1; letter-spacing:.04em; text-shadow:0 1px #d2e4d8; text-transform:uppercase; }
 .school-contact { display:flex; align-items:center; justify-content:center; gap:4px; color:#064e3b; }
 .school-contact input { width:min(90%,115mm); height:17px; padding:0 3px; color:#24362d; border:0; background:transparent; text-align:center; font-size:8px; font-weight:600; outline:0; }

@@ -721,7 +721,7 @@ function ReportCard({ records, studentCode, onStudentChange, filter, details, on
     </div>
     <article className="student-report-card" aria-label="Student report card">
       <header className="report-card-header">
-        <div className="logo-placeholder ges-logo"><strong>GES</strong><span>Ghana Education Service</span></div>
+        <img className="report-card-logo" src="/ghana-coat-of-arms.png" alt="Ghana coat of arms" />
         <div>
           <h2>{SCHOOL_NAME}</h2>
           <div className="school-contact"><span>●</span><input aria-label="School address" value={details.address} onChange={(event) => update("address", event.target.value)} /></div>
