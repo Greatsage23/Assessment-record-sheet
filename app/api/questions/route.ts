@@ -2,7 +2,7 @@ import { and, asc, eq } from "drizzle-orm";
 import { ensureDatabase, getDb } from "../../../db";
 import { appMeta, questionBank, subjectPasswords, subjectTeachers } from "../../../db/schema";
 
-const VALID_CLASSES = new Set(["Basic 7 Red", "Basic 7 Blue", "Basic 8 Red", "Basic 8 Blue", "Basic 9 Red", "Basic 9 Blue"]);
+const VALID_CLASSES = new Set(["Basic 7", "Basic 8", "Basic 9", "Basic 7 Red", "Basic 7 Blue", "Basic 8 Red", "Basic 8 Blue", "Basic 9 Red", "Basic 9 Blue"]);
 const VALID_SUBJECTS = new Set(["English Language", "Mathematics", "Science", "Social Studies", "Computing", "Religious and Moral Education", "Creative Arts and Design", "Career Technology", "Ghanaian Language", "French"]);
 const VALID_TYPES = new Set(["Objective", "Short Answer", "Essay", "Practical"]);
 const VALID_DIFFICULTIES = new Set(["Easy", "Moderate", "Challenging"]);

@@ -3,7 +3,7 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { buildComputingQuestionBank, computingTopicsForClass } from "./computing-question-bank";
 
-const CLASSES = ["Basic 7 Red", "Basic 7 Blue", "Basic 8 Red", "Basic 8 Blue", "Basic 9 Red", "Basic 9 Blue"];
+const CLASSES = ["Basic 7", "Basic 8", "Basic 9"];
 const SUBJECTS = ["English Language", "Mathematics", "Science", "Social Studies", "Computing", "Religious and Moral Education", "Creative Arts and Design", "Career Technology", "Ghanaian Language", "French"];
 const SUBJECT_SHORT: Record<string, string> = { "English Language": "English", Mathematics: "Maths", Science: "Science", "Social Studies": "Social", Computing: "Computing", "Religious and Moral Education": "R.M.E.", "Creative Arts and Design": "Creative Arts", "Career Technology": "Career Tech", "Ghanaian Language": "Ghanaian Lang.", French: "French" };
 
@@ -18,7 +18,7 @@ const dataUrl = (blob: Blob) => new Promise<string>((resolve, reject) => { const
 const matchesType = (question: Question, type: PaperType) => type === "Essay" ? ["Essay", "Theory", "Short Answer"].includes(question.questionType) : question.questionType === type;
 
 export default function QuestionBank() {
-  const [scope, setScope] = useState({ className: "Basic 8 Red", subject: "Computing" });
+  const [scope, setScope] = useState({ className: "Basic 8", subject: "Computing" });
   const [questions, setQuestions] = useState<Question[]>([]);
   const [paper, setPaper] = useState<Question[]>([]);
   const [choices, setChoices] = useState<Record<string, TopicChoice>>({});
