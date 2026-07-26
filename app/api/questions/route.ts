@@ -4,7 +4,6 @@ import { appMeta, questionBank, subjectPasswords, subjectTeachers } from "../../
 
 const VALID_CLASSES = new Set(["Basic 7 Red", "Basic 7 Blue", "Basic 8 Red", "Basic 8 Blue", "Basic 9 Red", "Basic 9 Blue"]);
 const VALID_SUBJECTS = new Set(["English Language", "Mathematics", "Science", "Social Studies", "Computing", "Religious and Moral Education", "Creative Arts and Design", "Career Technology", "Ghanaian Language", "French"]);
-const VALID_TERMS = new Set(["Term 1", "Term 2", "Term 3"]);
 const VALID_TYPES = new Set(["Objective", "Short Answer", "Essay"]);
 const VALID_DIFFICULTIES = new Set(["Easy", "Moderate", "Challenging"]);
 
@@ -28,12 +27,10 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const className = url.searchParams.get("className")?.trim();
     const subject = url.searchParams.get("subject")?.trim();
-    const term = url.searchParams.get("term")?.trim();
     const db = await getDb();
     const filters = [];
     if (className) filters.push(eq(questionBank.className, className));
     if (subject) filters.push(eq(questionBank.subject, subject));
-    if (term) filters.push(eq(questionBank.term, term));
     const questions = filters.length
       ? await db.select().from(questionBank).where(and(...filters)).orderBy(asc(questionBank.topic), asc(questionBank.id))
       : await db.select().from(questionBank).orderBy(asc(questionBank.className), asc(questionBank.subject), asc(questionBank.topic));
@@ -73,7 +70,7 @@ export async function POST(request: Request) {
       return Response.json({ ok: true });
     }
 
-    const term = payload.term?.trim() ?? "";
+    const term = "All Terms";
     const topic = payload.topic?.trim() ?? "";
     const questionType = payload.questionType?.trim() ?? "";
     const difficulty = payload.difficulty?.trim() ?? "";
@@ -81,7 +78,7 @@ export async function POST(request: Request) {
     const answer = payload.answer?.trim() ?? "";
     const marks = Math.max(1, Math.min(100, Number(payload.marks) || 1));
     const options = (payload.options ?? []).map((option) => option.trim()).filter(Boolean).slice(0, 8);
-    if (!VALID_TERMS.has(term) || !VALID_TYPES.has(questionType) || !VALID_DIFFICULTIES.has(difficulty) || !topic || !questionText || !answer) return Response.json({ error: "Complete all required question fields." }, { status: 400 });
+    if (!VALID_TYPES.has(questionType) || !VALID_DIFFICULTIES.has(difficulty) || !topic || !questionText || !answer) return Response.json({ error: "Complete all required question fields." }, { status: 400 });
     if (questionType === "Objective" && options.length < 2) return Response.json({ error: "Objective questions require at least two answer options." }, { status: 400 });
     const [teacher] = await db.select().from(subjectTeachers).where(and(eq(subjectTeachers.className, className), eq(subjectTeachers.subject, subject))).limit(1);
     const [question] = await db.insert(questionBank).values({ className, subject, term, topic, questionType, difficulty, questionText, options: JSON.stringify(options), answer, marks, createdBy: teacher?.teacherName || "Subject teacher" }).returning();
