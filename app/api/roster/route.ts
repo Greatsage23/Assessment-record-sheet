@@ -23,16 +23,21 @@ function cleanStudent(input: RosterInput) {
   };
 }
 
-async function createSubjectRecords(student: { studentCode: string; name: string; className: string }) {
+async function createSubjectRecords(students: { studentCode: string; name: string; className: string }[]) {
+  if (!students.length) return;
   const db = await getDb();
-  for (const term of TERMS) {
-    for (const subject of SUBJECTS) {
-      await db.insert(records).values({
-        ...student, subject, term, classScore: 0, examScore: 0,
-        updatedAt: new Date().toISOString(),
-      }).onConflictDoNothing();
-    }
-  }
+  const updatedAt = new Date().toISOString();
+  const subjectRecords = students.flatMap((student) =>
+    TERMS.flatMap((term) => SUBJECTS.map((subject) => ({
+      ...student,
+      subject,
+      term,
+      classScore: 0,
+      examScore: 0,
+      updatedAt,
+    }))),
+  );
+  await db.insert(records).values(subjectRecords).onConflictDoNothing();
 }
 
 export async function GET(request: Request) {
@@ -42,6 +47,11 @@ export async function GET(request: Request) {
     const className = url.searchParams.get("className") ?? "Basic 8 Red";
     const db = await getDb();
     const roster = await db.select().from(studentRoster).where(eq(studentRoster.className, className)).orderBy(asc(studentRoster.studentCode));
+    await createSubjectRecords(roster.map(({ studentCode, name, className: studentClass }) => ({
+      studentCode,
+      name,
+      className: studentClass,
+    })));
     return Response.json({ roster });
   } catch (error) {
     return Response.json({ error: error instanceof Error ? error.message : "Unable to load the student roster." }, { status: 500 });
@@ -58,6 +68,7 @@ export async function POST(request: Request) {
     const students = payload.students ?? [];
     if (!students.length) return Response.json({ error: "Add at least one student." }, { status: 400 });
     let added = 0;
+    const addedStudents: { studentCode: string; name: string; className: string }[] = [];
     const nextNumbers = new Map<string, number>();
     for (const input of students) {
       const cleaned = cleanStudent(input);
@@ -76,9 +87,12 @@ export async function POST(request: Request) {
       const inserted = await db.insert(studentRoster).values({
         ...student, updatedAt: new Date().toISOString(),
       }).onConflictDoNothing().returning();
-      if (inserted.length) added += 1;
-      await createSubjectRecords(student);
+      if (inserted.length) {
+        added += 1;
+        addedStudents.push(student);
+      }
     }
+    await createSubjectRecords(addedStudents);
     return Response.json({ ok: true, added }, { status: 201 });
   } catch (error) {
     return Response.json({ error: error instanceof Error ? error.message : "Unable to update the roster." }, { status: 500 });
