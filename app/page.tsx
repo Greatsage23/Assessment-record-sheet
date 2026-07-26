@@ -12,6 +12,7 @@ type Student = {
   term: string;
   classScore: number;
   examScore: number;
+  updatedAt?: string;
 };
 type RosterStudent = { id: number; studentCode: string; name: string; className: string };
 
@@ -74,6 +75,8 @@ function Icon({ name, size = 22 }: { name: string; size?: number }) {
     trash: <><path d="M3 6h18M8 6V4h8v2M19 6l-1 15H6L5 6M10 11v6M14 11v6"/></>,
     edit: <><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4z"/></>,
     bell: <><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></>,
+    trophy: <><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0z"/><path d="M7 6H4v2a4 4 0 0 0 4 4M17 6h3v2a4 4 0 0 1-4 4"/></>,
+    alert: <><path d="M10.3 2.9 1.8 17a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 2.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></>,
   };
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg>;
 }
@@ -181,6 +184,10 @@ export default function Home() {
   const passed = students.filter((s) => s.classScore + s.examScore >= 50).length;
   const passRate = students.length ? Math.round((passed / students.length) * 100) : 0;
   const highest = students.length ? Math.max(...students.map((s) => s.classScore + s.examScore)) : 0;
+  const hasPerformance = students.some((student) => student.classScore + student.examScore > 0);
+  const gradeDistribution = useMemo(() => ["A", "B", "C", "D", "F"].map((grade) => ({ grade, count: students.filter((student) => gradeFor(student.classScore + student.examScore) === grade).length })), [students]);
+  const topStudents = useMemo(() => [...students].filter((student) => student.classScore + student.examScore > 0).sort((a, b) => (b.classScore + b.examScore) - (a.classScore + a.examScore)).slice(0, 5), [students]);
+  const supportStudents = useMemo(() => students.filter((student) => student.classScore + student.examScore > 0 && student.classScore + student.examScore < 50).sort((a, b) => (a.classScore + a.examScore) - (b.classScore + b.examScore)).slice(0, 5), [students]);
   const overallStudents = useMemo(() => {
     const learners = new Map<string, { studentCode: string; name: string; className: string; subjectScores: Record<string, number> }>();
     for (const record of overallRecords) {
@@ -530,12 +537,12 @@ export default function Home() {
     }
   }
 
-  const pageTitle = ({ dashboard: "Class Overview", scorebook: "Assessment Record", administrator: "Administrator", schemes: "Scheme of Work", reports: "Performance Report", overall: "Combined Grade Performance", settings: "Assessment Settings" } as Record<View, string>)[view];
+  const pageTitle = ({ dashboard: "Assessment Overview", scorebook: "Assessment Record", administrator: "Administrator", schemes: "Scheme of Work", reports: "Performance Report", overall: "Combined Grade Performance", settings: "Assessment Settings" } as Record<View, string>)[view];
 
   return (
     <main className="app-shell">
       <aside className="sidebar">
-        <div className="brand"><span className="brand-mark">54</span><span><strong>1954 J.H.S.</strong><small>ClassRecord</small></span></div>
+        <div className="brand"><img className="sidebar-logo" src="/school-logo.png" alt="1st November 1954 J.H.S. logo"/><span><strong>1954 J.H.S.</strong><small>Assessment system</small></span></div>
         <nav aria-label="Main navigation">
           {navItems.map((item) => (
             <button key={item.id} className={view === item.id ? "nav-item active" : "nav-item"} onClick={() => item.id === "overall" ? void loadOverallPerformance() : setView(item.id)}>
@@ -548,10 +555,7 @@ export default function Home() {
 
       <section className="workspace">
         <header className="topbar">
-          <div>
-            <p className="school-dashboard-name">{SCHOOL_NAME}</p>
-            <h1>{pageTitle}</h1>
-          </div>
+          <div className="topbar-identity"><img src="/school-logo.png" alt=""/><div><p className="school-dashboard-name">{SCHOOL_NAME}</p><span>Assessment Record Management System</span></div></div>
           <div className="top-actions">
             <label className="searchbox"><Icon name="search" size={19}/><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search students..." aria-label="Search students"/></label>
             <button className="icon-btn" aria-label="Notifications"><Icon name="bell"/></button>
@@ -559,24 +563,33 @@ export default function Home() {
           </div>
         </header>
 
-        {view !== "schemes" && <div className="filters">
+        <div className="page-intro"><p className="eyebrow">Academic workspace</p><h1>{pageTitle}</h1>{view === "dashboard" && <p>Manage student records, scores and academic performance.</p>}</div>
+
+        {view !== "schemes" && <div className="filter-panel"><div className="filter-panel-heading"><span>Current assessment</span><small>Choose the class, subject and term to update this workspace.</small></div><div className="filters">
           <label><span>Class</span><select value={filter.className} onChange={(e) => setFilter({ ...filter, className: e.target.value })}>{SCHOOL_CLASSES.map((className) => <option key={className}>{className}</option>)}</select></label>
           <label><span>Subject</span><select value={filter.subject} onChange={(e) => setFilter({ ...filter, subject: e.target.value })}>{JHS_SUBJECTS.map((subject) => <option key={subject}>{subject}</option>)}</select></label>
           <label><span>Term</span><select value={filter.term} onChange={(e) => setFilter({ ...filter, term: e.target.value })}><option>Term 1</option><option>Term 2</option><option>Term 3</option></select></label>
           {view === "overall" ? <button className="primary" onClick={() => void loadOverallPerformance()}><Icon name="chart" size={19}/>Refresh combined results</button> : view === "administrator" ? <span className="admin-filter-badge">🔒 Administrator controls</span> : <button className="primary" onClick={() => void openScoreEntry()} disabled={scoreEntryPending}><Icon name="edit" size={19}/>{scoreEntryPending ? "Checking access…" : "Enter scores"}</button>}
-        </div>}
+        </div></div>}
         {view !== "schemes" && <div className="selected-teacher"><span>Subject teacher</span><strong>{selectedTeacher || "Not assigned"}</strong><small>{filter.subject} · {filter.className}</small></div>}
 
         {message && <div className="toast" role="status">{message}<button onClick={() => setMessage("")} aria-label="Dismiss"><Icon name="close" size={16}/></button></div>}
 
         {(view === "scorebook" || view === "dashboard") && <>
           <section className="metrics">
-            <article><span className="metric-icon cyan"><Icon name="users" size={29}/></span><div><strong>{students.length}</strong><span>Students</span></div></article>
-            <article><span className="metric-icon green"><Icon name="chart" size={29}/></span><div><strong>{average}%</strong><span>Class average</span></div></article>
-            <article><span className="metric-icon emerald">✓</span><div><strong>{passRate}%</strong><span>Pass rate</span></div></article>
+            <article><span className="metric-icon navy"><Icon name="users" size={25}/></span><div><small>Students</small><strong>{students.length}</strong><span>Official class roster</span></div></article>
+            <article><span className="metric-icon green"><Icon name="chart" size={25}/></span><div><small>Class average</small><strong>{average}%</strong><span>Based on recorded scores</span></div></article>
+            <article><span className="metric-icon gold"><Icon name="trophy" size={25}/></span><div><small>Pass rate</small><strong>{passRate}%</strong><span>{passed} of {students.length} students</span></div></article>
+            {hasPerformance && <article><span className="metric-icon teal"><Icon name="trophy" size={25}/></span><div><small>Highest score</small><strong>{highest}%</strong><span>Current selection</span></div></article>}
           </section>
           {view === "dashboard" && <button className="scheme-dashboard-cta" onClick={() => setView("schemes")}><Icon name="book" size={22}/><span><strong>View Scheme of Work</strong><small>Browse approved curriculum documents by level, term and subject.</small></span></button>}
-          <ScoreTable students={visible} loading={loading} />
+          <ScoreTable students={visible} loading={loading} onManageStudents={() => { setView("administrator"); setAdminSection("students"); }} />
+          {view === "dashboard" && hasPerformance && <section className="dashboard-insights" aria-label="Assessment insights">
+            <article className="insight-card distribution-card"><div className="insight-head"><div><span>Performance insight</span><h2>Grade distribution</h2></div><Icon name="chart" size={21}/></div><div className="distribution-bars">{gradeDistribution.map((item) => <div key={item.grade}><b className={`grade grade-${item.grade.toLowerCase()}`}>{item.grade}</b><span><i style={{ width: `${students.length ? (item.count / students.length) * 100 : 0}%` }}/></span><strong>{item.count}</strong></div>)}</div></article>
+            <article className="insight-card"><div className="insight-head"><div><span>{filter.subject}</span><h2>Subject performance</h2></div><Icon name="book" size={21}/></div><div className="subject-overview"><strong>{average}%</strong><span>Class average</span><div><b>{highest}%</b><small>Highest score</small></div><div><b>{passRate}%</b><small>Pass rate</small></div></div></article>
+            <article className="insight-card"><div className="insight-head"><div><span>Current selection</span><h2>Top-performing students</h2></div><Icon name="trophy" size={21}/></div><div className="student-insight-list">{topStudents.map((student, index) => <div key={student.id}><span className="rank">{index + 1}</span><p><strong>{student.name}</strong><small>{student.studentCode}</small></p><b>{student.classScore + student.examScore}%</b></div>)}</div></article>
+            {supportStudents.length > 0 && <article className="insight-card support-card"><div className="insight-head"><div><span>Academic support</span><h2>Students requiring support</h2></div><Icon name="alert" size={21}/></div><div className="student-insight-list">{supportStudents.map((student) => <div key={student.id}><span className="support-dot"/><p><strong>{student.name}</strong><small>{student.studentCode}</small></p><b>{student.classScore + student.examScore}%</b></div>)}</div></article>}
+          </section>}
         </>}
 
         {view === "schemes" && <SchemeOfWork />}
@@ -787,6 +800,6 @@ function ReportCard({ records, studentCode, onStudentChange, filter, details, on
   </div>;
 }
 
-function ScoreTable({ students, loading }: { students: Student[]; loading: boolean }) {
-  return <section className="score-panel"><div className="panel-head"><div><h2>Student scores</h2><p>Official roster managed through Student List</p></div><span className="record-count">{students.length} records</span></div><div className="table-scroll"><table><thead><tr><th>Student</th><th>Class Score <small>(30)</small></th><th>Exam Score <small>(70)</small></th><th>Total <small>(100)</small></th><th>Grade</th><th>Status</th></tr></thead><tbody>{loading ? <tr><td colSpan={6} className="empty">Loading records…</td></tr> : students.length === 0 ? <tr><td colSpan={6} className="empty">No students are in the official roster for this class.</td></tr> : students.map((s, index) => { const total = s.classScore + s.examScore; return <tr key={s.id}><td><span className={`avatar small tone-${index % 5}`}>{initials(s.name)}</span><span><strong>{s.name}</strong><small>{s.studentCode}</small></span></td><td>{s.classScore}</td><td>{s.examScore}</td><td><b>{total}%</b></td><td><span className={`grade grade-${gradeFor(total).toLowerCase()}`}>{gradeFor(total)}</span></td><td><span className={total >= 50 ? "status passed" : "status support"}><i/>{total >= 50 ? "Passed" : "Needs support"}</span></td></tr> })}</tbody></table></div></section>;
+function ScoreTable({ students, loading, onManageStudents }: { students: Student[]; loading: boolean; onManageStudents: () => void }) {
+  return <section className="score-panel"><div className="panel-head"><div><span className="panel-kicker">Assessment records</span><h2>Student scores</h2><p>Official roster managed through Student List</p></div><span className="record-count">{students.length} records</span></div><div className="table-scroll"><table><thead><tr><th>Student</th><th>Class Score <small>(30)</small></th><th>Exam Score <small>(70)</small></th><th>Total <small>(100)</small></th><th>Grade</th><th>Status</th></tr></thead><tbody>{loading ? <tr><td colSpan={6} className="empty"><span className="loading-state"><i/>Retrieving student records…</span></td></tr> : students.length === 0 ? <tr><td colSpan={6} className="empty"><div className="score-empty-state"><span><Icon name="users" size={30}/></span><strong>No students found</strong><p>No students are in the official roster for this class yet.</p><button className="secondary compact" onClick={onManageStudents}>Open Student List</button></div></td></tr> : students.map((s, index) => { const total = s.classScore + s.examScore; return <tr key={s.id}><td><span className={`avatar small tone-${index % 5}`}>{initials(s.name)}</span><span><strong>{s.name}</strong><small>{s.studentCode}</small></span></td><td>{s.classScore}</td><td>{s.examScore}</td><td><b>{total}%</b></td><td><span className={`grade grade-${gradeFor(total).toLowerCase()}`}>{gradeFor(total)}</span></td><td><span className={total >= 50 ? "status passed" : "status support"}><i/>{total >= 50 ? "Passed" : "Needs support"}</span></td></tr> })}</tbody></table></div></section>;
 }
