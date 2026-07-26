@@ -727,7 +727,7 @@ function ReportCard({ records, studentCode, onStudentChange, filter, details, on
           <div className="school-contact"><span>●</span><input aria-label="School address" value={details.address} onChange={(event) => update("address", event.target.value)} /></div>
           <div className="school-contact"><span>☎</span><input aria-label="School contact details" value={details.contact} onChange={(event) => update("contact", event.target.value)} placeholder="Tel: __________  |  Email: ____________________" /></div>
         </div>
-        <div className="logo-placeholder school-logo"><strong>1954</strong><span>J.H.S. Crest</span></div>
+        <img className="report-card-logo school-report-logo" src="/school-logo.png" alt="1st November 1954 JHS school crest" />
       </header>
 
       <div className="report-heading-row">
