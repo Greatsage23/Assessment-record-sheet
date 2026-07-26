@@ -8,7 +8,7 @@ const SUBJECTS = ["English Language", "Mathematics", "Science", "Social Studies"
 const SUBJECT_SHORT: Record<string, string> = { "English Language": "English", Mathematics: "Maths", Science: "Science", "Social Studies": "Social", Computing: "Computing", "Religious and Moral Education": "R.M.E.", "Creative Arts and Design": "Creative Arts", "Career Technology": "Career Tech", "Ghanaian Language": "Ghanaian Lang.", French: "French" };
 
 type PaperType = "Objective" | "Essay" | "Practical";
-type Question = { id: number; className: string; subject: string; term: string; topic: string; questionType: "Objective" | "Short Answer" | "Essay" | "Theory" | "Practical"; difficulty: "Easy" | "Moderate" | "Challenging"; questionText: string; options: string[]; answer: string; marks: number; createdBy: string; createdAt: string; source?: "Built-in" };
+type Question = { id: number; className: string; subject: string; term: string; topic: string; questionType: "Objective" | "Short Answer" | "Essay" | "Theory" | "Practical"; difficulty: "Easy" | "Moderate" | "Challenging"; questionText: string; options: string[]; answer: string; marks: number; images?: string[]; createdBy: string; createdAt: string; source?: "Built-in" };
 type TopicChoice = { selected: boolean; count: number; type: PaperType };
 
 const emptyQuestion = { topic: "", questionType: "Objective", difficulty: "Moderate", questionText: "", optionsText: "", answer: "", marks: 1, subjectPassword: "" };
@@ -109,12 +109,14 @@ export default function QuestionBank() {
   async function downloadWord() {
     if (!paper.length) return setNotice("Generate a paper before downloading.");
     let logo = ""; try { logo = await dataUrl(await (await fetch("/school-logo.png")).blob()); } catch { /* text header remains */ }
+    const imageData = new Map<string, string>();
+    await Promise.all([...new Set(paper.flatMap((question) => question.images ?? []))].map(async (path) => { try { imageData.set(path, await dataUrl(await (await fetch(path)).blob())); } catch { /* Question text remains available. */ } }));
     const groups: Array<[PaperType, Question[]]> = [["Practical", paper.filter((q) => matchesType(q, "Practical"))], ["Essay", paper.filter((q) => matchesType(q, "Essay"))], ["Objective", paper.filter((q) => matchesType(q, "Objective"))]];
     const orderedPaper = groups.flatMap(([, items]) => items);
     let theoryNumber = 0;
     const sections = groups.filter(([, items]) => items.length).map(([type, items], sectionIndex) => {
       const title = type === "Objective" ? "OBJECTIVE TEST" : type === "Practical" ? "PRACTICAL TEST" : "ESSAY";
-      const body = items.map((q, index) => { const number = type === "Objective" ? index + 1 : ++theoryNumber; const options = q.options.length ? `<ol type="A">${q.options.map((option) => `<li>${escapeHtml(option)}</li>`).join("")}</ol>` : `<div class="answer-lines">${"<div></div>".repeat(Math.min(7, Math.max(3, q.marks)))}</div>`; const mark = type === "Essay" ? `<strong>[${q.marks} marks]</strong>` : ""; return `<div class="question"><p><b>${number}.</b> ${escapeHtml(q.questionText)} ${mark}</p>${options}</div>`; }).join("");
+      const body = items.map((q, index) => { const number = type === "Objective" ? index + 1 : ++theoryNumber; const options = q.options.length ? `<ol type="A">${q.options.map((option) => `<li>${escapeHtml(option)}</li>`).join("")}</ol>` : `<div class="answer-lines">${"<div></div>".repeat(Math.min(7, Math.max(3, q.marks)))}</div>`; const mark = type === "Essay" ? `<strong>[${q.marks} marks]</strong>` : ""; const figures = q.images?.length ? `<div style="margin:12px 0;text-align:center">${q.images.map((path, imageIndex) => imageData.get(path) ? `<figure style="width:120px;margin:8px;display:inline-block;text-align:center;vertical-align:top"><img src="${imageData.get(path)}" style="max-width:120px;max-height:90px;object-fit:contain"><figcaption style="font-weight:bold">${String.fromCharCode(65 + imageIndex)}</figcaption></figure>` : "").join("")}</div>` : ""; return `<div class="question"><p><b>${number}.</b> ${escapeHtml(q.questionText)} ${mark}</p>${figures}${options}</div>`; }).join("");
       const sectionMarks = scope.subject === "Computing" ? (type === "Objective" ? 40 : type === "Practical" ? 24 : 36) : items.reduce((sum, q) => sum + q.marks, 0);
       const instruction = type === "Objective" ? "Answer all 40 questions. Each question is followed by four options lettered A to D. Choose the correct option for each question." : type === "Essay" && scope.subject === "Computing" ? "Answer any three of the four questions in this section. Each question carries 12 marks." : escapeHtml(paperSettings.instructions);
       const paperLabel = type === "Objective" ? "PAPER 1" : type === "Practical" ? "PAPER 2 · SECTION A" : "PAPER 2 · SECTION B";

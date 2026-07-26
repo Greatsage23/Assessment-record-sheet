@@ -9,6 +9,7 @@ export type BuiltInQuestion = {
   questionText: string;
   options: string[];
   answer: string;
+  images?: string[];
   marks: number;
   createdBy: string;
   createdAt: string;
@@ -155,9 +156,26 @@ function practicalQuestions(className: string, pack: TopicPack): BuiltInQuestion
 
 export function buildComputingQuestionBank(className: string): BuiltInQuestion[] {
   const allowed = new Set(computingTopicsForClass(className));
-  return packs.filter((pack) => allowed.has(pack.topic)).flatMap((pack) => [
+  const generated = packs.filter((pack) => allowed.has(pack.topic)).flatMap((pack) => [
     ...objectiveQuestions(className, pack),
     ...theoryQuestions(className, pack),
     ...practicalQuestions(className, pack),
   ]);
+  const suppliedPracticals: BuiltInQuestion[] = [
+    {
+      id: stableId(`${className}-supplied-cloud-taskbar-practical`), className, subject: "Computing", term: "All Terms", topic: "Internet and Social Media", questionType: "Practical", difficulty: "Moderate", marks: 24,
+      questionText: "Study Figures A-D and the labelled Windows taskbar, then answer the following.\n(a) Identify the general name of Figures A-D. [2 marks]\n(b) Name Figures A, B, C and D. [4 marks]\n(c) Name the taskbar features labelled 1, 2, 3, 4 and 5. [10 marks]\n(d) Which taskbar feature displays the date and time? [2 marks]\n(e) State the uses of the parts labelled 1, 2 and 4. [6 marks]",
+      images: ["/practical-questions/cloud-google-drive.png", "/practical-questions/cloud-icloud.jpeg", "/practical-questions/cloud-dropbox.png", "/practical-questions/cloud-onedrive.png", "/practical-questions/windows-taskbar.png"],
+      options: [], answer: "(a) Cloud-storage or cloud-computing services — 2 marks.\n(b) A Google Drive; B iCloud; C Dropbox; D Microsoft OneDrive — 1 mark each.\n(c) 1 Start button; 2 Search; 3 Task View; 4 pinned/running application icons; 5 notification area/system tray — 2 marks each.\n(d) The notification area/system tray — 2 marks.\n(e) Start opens applications/settings; Search finds apps, files and information; pinned/running icons launch or switch applications — 2 marks each.",
+      createdBy: "School-supplied practical bank", createdAt: "", source: "Built-in",
+    },
+    {
+      id: stableId(`${className}-supplied-input-devices-practical`), className, subject: "Computing", term: "All Terms", topic: "Components of Computers and Computer Systems", questionType: "Practical", difficulty: "Moderate", marks: 24,
+      questionText: "Study the devices labelled A-F, then answer the following.\n(a) Identify each image labelled A-F. [12 marks]\n(b) State one use each of devices C, D, E and F. [8 marks]\n(c) Under which category of computer devices will you classify D, E and F? [2 marks]\n(d) Name another input device that can perform the same pointing function as device F. [2 marks]",
+      images: ["/practical-questions/qr-code.png", "/practical-questions/barcode-reader.jpeg", "/practical-questions/trackball.jpeg", "/practical-questions/webcam.jpeg", "/practical-questions/microphone.jpeg", "/practical-questions/mouse.jpeg"],
+      options: [], answer: "(a) A QR code; B barcode reader/scanner; C trackball; D webcam; E microphone; F mouse — 2 marks each.\n(b) C controls the pointer; D captures live images/video; E captures sound; F controls the pointer and selects items — 2 marks each.\n(c) Input devices — 2 marks.\n(d) Trackball, touchpad or touchscreen — 2 marks.",
+      createdBy: "School-supplied practical bank", createdAt: "", source: "Built-in",
+    },
+  ];
+  return [...generated, ...suppliedPracticals.filter((question) => allowed.has(question.topic))];
 }
