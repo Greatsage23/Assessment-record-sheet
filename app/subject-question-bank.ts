@@ -46,6 +46,53 @@ function rotate(correct: string, distractors: string[], index: number) {
   return { options, answer: `${"ABCD"[position]}. ${correct}` };
 }
 
+const dagbaniTopicNames: Record<string, string> = {
+  "Oral Language and Listening": "Yɛltɔɣa Yɛlibu mini Wumibu",
+  "Reading Comprehension": "Karimbu mini Yɛlkpana Baŋbu",
+  "Grammar and Language Use": "Dagbani Sabbu Zalisi",
+  "Vocabulary Development": "Bachi Pala Baŋbu",
+  "Writing and Composition": "Sabbu mini Lahibali Nambu",
+  "Language Structure": "Bachinima mini Ŋa Biɛhigu",
+  "Language Structure and Translation": "Bachinima Biɛhigu mini Yɛltɔɣa Lɛbigibu",
+  "Advanced Language Structure": "Bachinima Biɛhigu Gahindili",
+  "Translation and Creative Writing": "Yɛltɔɣa Lɛbigibu mini Sabbu Palli",
+  "Oral Literature": "Nolini Baŋsim",
+  "Written Literature": "Sabirili Baŋsim",
+  "Oral and Written Literature": "Nolini mini Sabirili Baŋsim",
+  "Culture and Customs": "Dagbanli Kaya mini Taada",
+  "Traditional Institutions and Values": "Kaya, Taada mini Bin yɛra",
+  "Culture, Identity and Contemporary Life": "Dagbanli Kaya, Maŋmaŋa Baŋbu mini Zamaŋa Biɛhigu",
+};
+
+const dagbaniQuestionStems = [
+  "Bɔhimbu tuma bo ka di wuhiri ka bɔhimbila baŋ {topic} viɛnyɛla?",
+  "Tuma bo ka karimba ni tooi zaŋ n-vihi bɔhimbila baŋsim {topic} ni?",
+  "Bɔhimbila bɔri ni o zahim {topic}. Soli bo ka di viɛli n-ti o?",
+  "Lɛbigibu bo ka di wuhiri {topic} baŋsim viɛnyɛla?",
+  "Tuma bo ka di wuhiri ka bɔhimbila tooi zaŋ {topic} baŋsim n-tum tuma?",
+  "Bɔhimbu tuma bo ka di ni tooi ti {topic} baŋsim shahira ŋan viɛli pam?",
+  "Soli bo ka di viɛli pam n-ti {topic} zahimbu?",
+  "Sɔhigu bo ka di kpa {topic} polo viɛnyɛla?",
+];
+
+function dagbaniQuestionBank(className: string, topics: string[]): CurriculumQuestion[] {
+  return topics.flatMap((topic, topicIndex) => {
+    const dagbaniTopic = dagbaniTopicNames[topic] ?? topic;
+    return Array.from({ length: 40 }, (_, index) => {
+      const otherTopics = [1, 2, 3].map((offset) => topics[(topicIndex + offset + index) % topics.length] ?? topic);
+      const correct = `Karim ${dagbaniTopic}, kahigi di yɛlkpana ka zaŋ shɛhira n-wuhi a baŋsim.`;
+      const distractors = otherTopics.map((other) => `Zaŋ saha maa zaa n-zahim ${dagbaniTopicNames[other] ?? other}, ka da kahigi ${dagbaniTopic} yɛlkpana.`);
+      const choice = rotate(correct, distractors, index);
+      return {
+        id: stableId(`Dagbani-${className}-${topic}-objective-${index + 1}`), className, subject: "Ghanaian Language", term: "All Terms" as const, topic: dagbaniTopic,
+        questionType: "Objective" as const, difficulty: index < 12 ? "Easy" as const : index < 30 ? "Moderate" as const : "Challenging" as const,
+        questionText: dagbaniQuestionStems[index % dagbaniQuestionStems.length].replace("{topic}", dagbaniTopic), options: choice.options, answer: choice.answer, marks: 1,
+        createdBy: "Built-in Dagbani NaCCA curriculum bank", createdAt: "", source: "Built-in" as const,
+      };
+    });
+  });
+}
+
 function readingComprehensionBank(className: string): CurriculumQuestion[] {
   const openings = ["Read the following passage carefully and answer all the questions that follow.", "Study the passage below and answer the questions in complete sentences.", "Read the passage attentively before answering Questions (a) to (f).", "Use evidence from the passage to answer the questions that follow."];
   return Array.from({ length: 40 }, (_, index) => {
@@ -141,6 +188,7 @@ function beaconLiteratureBank(className: string, topic: string): CurriculumQuest
 
 export function buildSubjectQuestionBank(subject: string, className: string): CurriculumQuestion[] {
   const topics = curriculumTopicsFor(subject, className);
+  if (subject === "Ghanaian Language") return dagbaniQuestionBank(className, topics);
   const shortAnswerTopics = new Set(["Summary Writing", "Summary and Note-Making", "Media Literacy", "Library and Study Skills"]);
   const essayTopics = new Set(["Writing and Composition", "Narrative and Descriptive Writing", "Argumentative and Functional Writing"]);
   const special: CurriculumQuestion[] = subject === "English Language" ? [

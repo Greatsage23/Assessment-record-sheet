@@ -7,7 +7,7 @@ import { buildSubjectQuestionBank } from "./subject-question-bank";
 
 const CLASSES = ["Basic 7", "Basic 8", "Basic 9"];
 const SUBJECTS = ["English Language", "Mathematics", "Science", "Social Studies", "Computing", "Religious and Moral Education", "Creative Arts and Design", "Career Technology", "Ghanaian Language", "French"];
-const SUBJECT_SHORT: Record<string, string> = { "English Language": "English", Mathematics: "Maths", Science: "Science", "Social Studies": "Social", Computing: "Computing", "Religious and Moral Education": "R.M.E.", "Creative Arts and Design": "Creative Arts", "Career Technology": "Career Tech", "Ghanaian Language": "Ghanaian Lang.", French: "French" };
+const SUBJECT_SHORT: Record<string, string> = { "English Language": "English", Mathematics: "Maths", Science: "Science", "Social Studies": "Social", Computing: "Computing", "Religious and Moral Education": "R.M.E.", "Creative Arts and Design": "Creative Arts", "Career Technology": "Career Tech", "Ghanaian Language": "Dagbani", French: "French" };
 
 type PaperType = "Objective" | "Short Answer" | "Essay" | "Practical";
 type Question = { id: number; className: string; subject: string; term: string; topic: string; questionType: "Objective" | "Short Answer" | "Essay" | "Theory" | "Practical"; difficulty: "Easy" | "Moderate" | "Challenging"; questionText: string; options: string[]; answer: string; marks: number; images?: string[]; createdBy: string; createdAt: string; source?: "Built-in" };
@@ -61,7 +61,7 @@ export default function QuestionBank() {
   const builtIn = useMemo(() => scope.subject === "Computing" ? buildComputingQuestionBank(scope.className) : buildSubjectQuestionBank(scope.subject, scope.className), [scope]);
   const allQuestions = useMemo(() => [...builtIn, ...questions], [builtIn, questions]);
   const topics = useMemo(() => {
-    const curriculum = scope.subject === "Computing" ? computingTopicsForClass(scope.className) : curriculumTopicsFor(scope.subject, scope.className);
+    const curriculum = scope.subject === "Computing" ? computingTopicsForClass(scope.className) : scope.subject === "Ghanaian Language" ? [] : curriculumTopicsFor(scope.subject, scope.className);
     return [...new Set([...curriculum, ...allQuestions.map((question) => question.topic)])];
   }, [allQuestions, scope]);
   useEffect(() => {
