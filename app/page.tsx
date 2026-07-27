@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import SchemeOfWork from "./scheme-of-work";
 import QuestionBank from "./question-bank";
+import "./resources.css";
 
 type Student = {
   id: number;
@@ -17,7 +18,7 @@ type Student = {
 };
 type RosterStudent = { id: number; studentCode: string; name: string; className: string };
 
-type View = "dashboard" | "scorebook" | "administrator" | "schemes" | "questions" | "reports" | "overall" | "settings";
+type View = "dashboard" | "scorebook" | "administrator" | "resources" | "schemes" | "lessonNotes" | "questions" | "reports" | "overall" | "settings";
 type AdminSection = "students" | "teachers" | "passwords" | "schemes";
 type ReportDetails = {
   academicYear: string;
@@ -56,7 +57,7 @@ const navItems: { id: View; label: string; icon: string }[] = [
   { id: "dashboard", label: "Dashboard", icon: "grid" },
   { id: "scorebook", label: "Scorebook", icon: "book" },
   { id: "administrator", label: "Administrator", icon: "settings" },
-  { id: "schemes", label: "Scheme of Work", icon: "book" },
+  { id: "resources", label: "Resources", icon: "folder" },
   { id: "questions", label: "Questions", icon: "question" },
   { id: "reports", label: "Reports", icon: "chart" },
   { id: "overall", label: "Overall Performance", icon: "chart" },
@@ -67,6 +68,8 @@ function Icon({ name, size = 22 }: { name: string; size?: number }) {
   const paths: Record<string, React.ReactNode> = {
     grid: <><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></>,
     book: <><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></>,
+    folder: <><path d="M3 5h6l2 2h10v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 9h18"/></>,
+    file: <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h6"/></>,
     users: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></>,
     chart: <><path d="M3 3v18h18"/><path d="M7 16v-5M12 16V7M17 16V4"/></>,
     settings: <><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06-2.83 2.83-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21h-4v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06-2.83-2.83.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3v-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06L7.04 4.3l.06.06A1.65 1.65 0 0 0 8.92 4a1.65 1.65 0 0 0 1-1.51V2h4v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06 2.83 2.83-.06.06A1.65 1.65 0 0 0 19.4 9c.12.6.65 1.03 1.26 1.03H21v4h-.34c-.61 0-1.14.43-1.26 1z"/></>,
@@ -586,7 +589,7 @@ export default function Home() {
     }
   }
 
-  const pageTitle = ({ dashboard: "Assessment Overview", scorebook: "Assessment Record", administrator: "Administrator", schemes: "Scheme of Work", questions: "Questions", reports: "Performance Report", overall: "Combined Grade Performance", settings: "Assessment Settings" } as Record<View, string>)[view];
+  const pageTitle = ({ dashboard: "Assessment Overview", scorebook: "Assessment Record", administrator: "Administrator", resources: "Teaching Resources", schemes: "Scheme of Work", lessonNotes: "Lesson Notes", questions: "Questions", reports: "Performance Report", overall: "Combined Grade Performance", settings: "Assessment Settings" } as Record<View, string>)[view];
 
   return (
     <main className="app-shell">
@@ -614,13 +617,13 @@ export default function Home() {
 
         <div className="page-intro"><p className="eyebrow">Academic workspace</p><h1>{pageTitle}</h1>{view === "dashboard" && <p>Manage student records, scores and academic performance.</p>}</div>
 
-        {view !== "schemes" && view !== "questions" && <div className="filter-panel"><div className="filter-panel-heading"><span>Current assessment</span><small>Choose the class, subject and term to update this workspace.</small></div><div className="filters">
+        {view !== "resources" && view !== "schemes" && view !== "lessonNotes" && view !== "questions" && <div className="filter-panel"><div className="filter-panel-heading"><span>Current assessment</span><small>Choose the class, subject and term to update this workspace.</small></div><div className="filters">
           <label><span>Class</span><select value={filter.className} onChange={(e) => setFilter({ ...filter, className: e.target.value })}>{SCHOOL_CLASSES.map((className) => <option key={className}>{className}</option>)}</select></label>
           <label><span>Subject</span><select value={filter.subject} onChange={(e) => setFilter({ ...filter, subject: e.target.value })}>{JHS_SUBJECTS.map((subject) => <option key={subject}>{subject}</option>)}</select></label>
           <label><span>Term</span><select value={filter.term} onChange={(e) => setFilter({ ...filter, term: e.target.value })}><option>Term 1</option><option>Term 2</option><option>Term 3</option></select></label>
           {view === "overall" ? <button className="primary" onClick={() => void loadOverallPerformance()}><Icon name="chart" size={19}/>Refresh combined results</button> : view === "administrator" ? <span className="admin-filter-badge">🔒 Administrator controls</span> : <button className="primary" onClick={() => void openScoreEntry()} disabled={scoreEntryPending}><Icon name="edit" size={19}/>{scoreEntryPending ? "Checking access…" : "Enter scores"}</button>}
         </div></div>}
-        {view !== "schemes" && view !== "questions" && <div className="selected-teacher"><span>Subject teacher</span><strong>{selectedTeacher || "Not assigned"}</strong><small>{filter.subject} · {filter.className}</small></div>}
+        {view !== "resources" && view !== "schemes" && view !== "lessonNotes" && view !== "questions" && <div className="selected-teacher"><span>Subject teacher</span><strong>{selectedTeacher || "Not assigned"}</strong><small>{filter.subject} · {filter.className}</small></div>}
 
         {message && <div className="toast" role="status">{message}<button onClick={() => setMessage("")} aria-label="Dismiss"><Icon name="close" size={16}/></button></div>}
 
@@ -631,7 +634,7 @@ export default function Home() {
             <article><span className="metric-icon gold"><Icon name="trophy" size={25}/></span><div><small>Pass rate</small><strong>{passRate}%</strong><span>{passed} of {students.length} students</span><em>Pass mark: 50%</em></div></article>
             <article><span className="metric-icon teal"><Icon name="trophy" size={25}/></span><div><small>Highest score</small><strong>{hasPerformance ? `${highest}%` : "—"}</strong><span>Current selection</span><em>{hasPerformance ? "Recorded performance" : "No scores yet"}</em></div></article>
           </section>
-          {view === "dashboard" && <button className="scheme-dashboard-cta" onClick={() => setView("schemes")}><Icon name="book" size={22}/><span><strong>View Scheme of Work</strong><small>Browse approved curriculum documents by level, term and subject.</small></span></button>}
+          {view === "dashboard" && <button className="scheme-dashboard-cta" onClick={() => setView("resources")}><Icon name="folder" size={22}/><span><strong>Resources</strong><small>Open schemes of work and lesson notes for classroom planning.</small></span></button>}
           <ScoreTable students={visible} loading={loading} onManageStudents={() => { setView("administrator"); setAdminSection("students"); }} />
           {view === "dashboard" && <section className="academic-analytics" aria-label="Academic performance analytics">
             <article className="analytics-card performance-trend-card"><div className="analytics-head"><div><span className="analytics-icon"><Icon name="chart" size={20}/></span><div><h2>Academic Performance Trend</h2><p>Class average by term</p></div></div><div className="analytics-controls"><select aria-label="Chart type" defaultValue="Line chart"><option>Line chart</option></select><button aria-label="More chart options">•••</button></div></div><PerformanceTrend values={termAverages}/></article>
@@ -643,7 +646,15 @@ export default function Home() {
           </section>}
         </>}
 
-        {view === "schemes" && <SchemeOfWork />}
+        {view === "resources" && <section className="resource-hub" aria-label="Teaching resources">
+          <div className="resource-hero"><span className="resource-hero-icon"><Icon name="folder" size={30}/></span><div><p className="eyebrow">Teacher library</p><h2>Plan and prepare your lessons</h2><span>Choose a resource area to access approved teaching materials.</span></div></div>
+          <div className="resource-grid">
+            <button onClick={() => setView("schemes")}><span className="resource-card-icon green"><Icon name="book" size={27}/></span><span><strong>Scheme of Work</strong><small>Browse first-term schemes and download approved curriculum documents.</small><em>Open Scheme of Work →</em></span></button>
+            <button onClick={() => setView("lessonNotes")}><span className="resource-card-icon navy"><Icon name="file" size={27}/></span><span><strong>Lesson Notes</strong><small>Access lesson-note resources organised for classroom teaching.</small><em>Open Lesson Notes →</em></span></button>
+          </div>
+        </section>}
+        {view === "schemes" && <><button className="resource-back" onClick={() => setView("resources")}>← Back to Resources</button><SchemeOfWork /></>}
+        {view === "lessonNotes" && <section className="lesson-notes-empty panel"><button className="resource-back" onClick={() => setView("resources")}>← Back to Resources</button><span className="lesson-notes-icon"><Icon name="file" size={32}/></span><p className="eyebrow">Teaching resources</p><h2>Lesson Notes</h2><p>No lesson notes have been added yet. This section is ready for lesson-note resources.</p></section>}
         {view === "questions" && <QuestionBank />}
 
         {view === "administrator" && !adminUnlocked && <section className="admin-lock panel">
