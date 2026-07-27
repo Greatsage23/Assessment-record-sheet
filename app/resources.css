@@ -60,6 +60,23 @@
 .dashboard-role-actions div { display:grid; gap:3px; }
 .dashboard-role-actions strong { font-size:15px; }
 .dashboard-role-actions small { color:#718078; font-size:12px; }
+.home-command-hero { position:relative; min-height:260px; margin-bottom:20px; padding:31px 34px; display:flex; align-items:center; justify-content:space-between; gap:30px; overflow:hidden; border-radius:19px; color:#fff; background:linear-gradient(125deg,#071f38 0%,#0a3650 58%,#087443 135%); box-shadow:0 18px 38px rgba(7,31,56,.16); }
+.home-command-hero::after { content:""; position:absolute; width:280px; height:280px; right:-80px; bottom:-180px; border:40px solid rgba(230,179,37,.12); border-radius:50%; }
+.home-command-copy { position:relative; z-index:1; max-width:650px; }
+.home-command-copy > p { margin:0 0 7px; color:#e6b325; font-size:11px; font-weight:850; letter-spacing:.09em; text-transform:uppercase; }
+.home-command-copy h2 { margin:0 0 9px; font-size:clamp(27px,3vw,38px); line-height:1.08; letter-spacing:-.6px; }
+.home-command-copy > span { display:block; max-width:580px; color:#ccdae5; font-size:14px; line-height:1.6; }
+.home-command-copy > div { display:flex; gap:10px; margin-top:22px; }
+.home-command-copy button { min-height:43px; }
+.home-hero-secondary { padding:10px 15px; display:flex; align-items:center; gap:8px; border:1px solid rgba(255,255,255,.35); border-radius:9px; color:#fff; background:rgba(255,255,255,.06); font-weight:750; }
+.home-crest { position:relative; z-index:1; width:205px; display:grid; justify-items:center; flex:0 0 auto; text-align:center; }
+.home-crest img { width:132px; height:132px; object-fit:contain; filter:drop-shadow(0 9px 15px rgba(0,0,0,.22)); }
+.home-crest span { margin-top:7px; color:#fff; font-size:12px; font-weight:900; }.home-crest small { margin-top:3px; color:#e6b325; font-size:9px; text-transform:uppercase; }
+.home-quick-access { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:13px; margin:0 0 18px; }
+.home-quick-access > button { min-height:92px; padding:16px; display:grid; grid-template-columns:43px 1fr auto; align-items:center; gap:12px; border:1px solid #dce5e0; border-radius:13px; color:#14271f; background:#fff; text-align:left; box-shadow:0 7px 20px rgba(7,31,56,.04); transition:.16s ease; }
+.home-quick-access > button:hover { transform:translateY(-2px); border-color:#9cbcaf; box-shadow:0 12px 25px rgba(7,31,56,.08); }
+.home-quick-access > button > span { width:43px; height:43px; display:grid; place-items:center; border-radius:11px; }.home-quick-access .green{color:#087443;background:#e6f4ed}.home-quick-access .navy{color:#071f38;background:#e8eef4}.home-quick-access .gold{color:#8b6710;background:#faf1d7}
+.home-quick-access div { display:grid; gap:3px; }.home-quick-access strong{font-size:13px}.home-quick-access small{color:#718078;font-size:11px}.home-quick-access b{color:#8ba096;font-size:18px}
 .teacher-workspace { display:grid; gap:18px; }
 .teacher-workspace-hero { display:flex; align-items:flex-start; gap:19px; padding:28px; border-radius:16px; color:#fff; background:#071f38; }
 .teacher-workspace-hero > span { width:60px; height:60px; display:grid; place-items:center; flex:0 0 auto; border-radius:15px; color:#fff; background:#087443; }
@@ -128,7 +145,10 @@
   .lesson-wide { grid-column:auto; }
   .lesson-day-list article { grid-template-columns:1fr; }
   .lesson-day-head { grid-column:auto; }
-  .dashboard-role-actions,.teacher-workflow,.review-summary,.review-curriculum { grid-template-columns:1fr; }
+  .dashboard-role-actions,.teacher-workflow,.review-summary,.review-curriculum,.home-quick-access { grid-template-columns:1fr; }
+  .home-command-hero { min-height:auto; align-items:flex-start; padding:25px 22px; }
+  .home-crest { display:none; }
+  .home-command-copy > div { flex-wrap:wrap; }
   .teacher-workspace-hero,.headteacher-banner,.review-card-head,.headteacher-management-head { align-items:flex-start; flex-direction:column; }
   .review-actions { flex-direction:column; }
   .review-actions button { width:100%; }
