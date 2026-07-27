@@ -51,6 +51,38 @@ function weeklyActivities(subject: string, className: string, week: string, stra
   ];
 }
 
+function curriculumStatements(subject: string, className: string, strand: string, subStrand: string) {
+  const topic = subStrand.split(" — ")[0];
+  if (strand === "Revision") return {
+    contentStandard: `Consolidate and apply the knowledge, skills and competencies developed across the ${subject} strands studied during the term.`,
+    indicators: `1. Recall and explain the principal concepts studied during the term.\n2. Apply the concepts accurately in integrated revision and examination-style tasks.\n3. Identify and correct personal misconceptions.`,
+    performanceIndicator: `By the end of the lessons, learners can complete a mixed ${subject} revision task, explain their answers and correct identified errors with increasing independence.`,
+  };
+  if (strand === "End-of-Term Examination") return {
+    contentStandard: `Demonstrate achievement of the term's intended ${subject} knowledge, skills, values and competencies through an end-of-term assessment.`,
+    indicators: `1. Respond independently to assessment tasks drawn from the strands studied.\n2. Apply appropriate subject knowledge, procedures and communication skills.\n3. Review feedback and correct common errors after the assessment.`,
+    performanceIndicator: `Learners can complete the end-of-term ${subject} assessment according to the stated instructions and use feedback to improve their responses.`,
+  };
+  const actions: Record<string, { standard: string; evidence: string }> = {
+    Computing: { standard: "demonstrate understanding and practical application", evidence: "explain the concept and complete an appropriate practical computing task" },
+    "English Language": { standard: "develop and apply effective listening, speaking, reading, writing or literary-response skills", evidence: "communicate an accurate oral or written response using appropriate language" },
+    Mathematics: { standard: "understand and apply mathematical concepts, representations and problem-solving strategies", evidence: "solve relevant problems, show working and explain the strategy used" },
+    Science: { standard: "understand scientific concepts and apply enquiry skills through observation, investigation and evidence", evidence: "explain the concept, carry out an appropriate investigation and interpret findings" },
+    "Social Studies": { standard: "understand and apply social, civic and environmental knowledge to Ghanaian life", evidence: "analyse a relevant situation and propose a responsible, evidence-based response" },
+    "Religious and Moral Education": { standard: "understand religious and moral teachings and apply their values to daily life", evidence: "explain the teaching and apply its values to a realistic moral situation" },
+    "Creative Arts and Design": { standard: "explore, create, perform and appraise artistic ideas using appropriate processes", evidence: "create or perform an original work and evaluate it using agreed criteria" },
+    "Career Technology": { standard: "apply safe technological knowledge, tools and processes to practical tasks", evidence: "use appropriate materials, tools and processes safely to produce and evaluate an outcome" },
+    "Ghanaian Language": { standard: "develop and apply oral, reading, writing and literary skills in the selected Ghanaian language", evidence: "communicate an accurate oral or written response using appropriate language and cultural knowledge" },
+    French: { standard: "develop and apply functional French communication skills in familiar contexts", evidence: "understand and produce a suitable spoken or written French response" },
+  };
+  const action = actions[subject] ?? { standard: "develop and apply appropriate knowledge and skills", evidence: "explain and apply the learning in a relevant task" };
+  return {
+    contentStandard: `${className} learners will ${action.standard} in relation to ${topic} under the ${strand} strand.`,
+    indicators: `1. Identify and explain the key ideas, terms or processes associated with ${topic}.\n2. Apply the knowledge or skill in guided individual, pair or group activities.\n3. Use the learning to complete an appropriate practical, oral or written task.`,
+    performanceIndicator: `By the end of the lessons, learners can ${action.evidence} on ${topic} with accuracy and limited teacher support.`,
+  };
+}
+
 function escapeWord(value: string) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("\n", "<br>");
 }
@@ -84,17 +116,21 @@ export default function LessonNotes() {
   function loadFromScheme(subject = note.subject, className = note.className, week = note.week) {
     const row = getBuiltInScheme(subject, className)[Math.max(0, Math.min(14, Number(week || 1) - 1))];
     if (!row) return;
+    const statements = curriculumStatements(subject, className, row.strand, row.subStrand);
     setNote((current) => ({
       ...current, subject, className, week,
       strand: row.strand,
       subStrand: row.subStrand,
+      contentStandard: statements.contentStandard,
+      indicators: statements.indicators,
+      performanceIndicator: statements.performanceIndicator,
       weekEnding: row.date,
       references: `NaCCA ${subject} Curriculum and approved ${className} ${subject} textbook; Teacher Resource Pack; Learner Resource Pack.`,
       resources: row.resources,
       competencies: competenciesBySubject[subject] ?? "Communication and Collaboration; Critical Thinking and Problem-Solving",
       days: weeklyActivities(subject, className, week, row.strand, row.subStrand),
     }));
-    setMessage(`${className} ${subject}, Week ${week}, loaded from the scheme of work. Review and edit the curriculum codes before export.`);
+    setMessage(`${className} ${subject}, Week ${week}, loaded from the scheme of work. The curriculum statements are editable; add or confirm official NaCCA codes where required.`);
   }
 
   function saveDraft() {
@@ -124,7 +160,7 @@ export default function LessonNotes() {
 
   async function submitForReview() {
     if (!note.teacherName.trim()) { setMessage("Enter the teacher's name before submitting."); return; }
-    if (!note.contentStandard.trim() || !note.indicators.trim()) { setMessage("Enter and verify the official content standard and indicator codes before submitting."); return; }
+    if (!note.contentStandard.trim() || !note.indicators.trim() || !note.performanceIndicator.trim()) { setMessage("Complete the content standard, indicators and performance indicator before submitting."); return; }
     setSubmitting(true);
     try {
       const response = await fetch("/api/lesson-notes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ teacherName: note.teacherName, subject: note.subject, className: note.className, week: note.week, strand: note.strand, subStrand: note.subStrand, noteData: note }) });
@@ -154,7 +190,7 @@ export default function LessonNotes() {
       <label>Subject<select value={note.subject} onChange={(e) => update("subject", e.target.value)}>{BUILT_IN_SCHEME_SUBJECTS.map((subject) => <option key={subject}>{subject}</option>)}</select></label>
     </div></div>
 
-    <div className="lesson-form-section panel"><h3>Curriculum information</h3><p className="lesson-helper">Enter the exact content standard, indicator and curriculum codes from the official NaCCA curriculum.</p><div className="lesson-form-grid">
+    <div className="lesson-form-section panel"><h3>Curriculum information</h3><p className="lesson-helper">Prepared automatically from the selected scheme of work. Teachers may edit the statements and add or confirm exact NaCCA curriculum codes where required.</p><div className="lesson-form-grid">
       <label>Strand<input value={note.strand} onChange={(e) => update("strand", e.target.value)} placeholder="Official curriculum strand"/></label>
       <label>Sub-strand<input value={note.subStrand} onChange={(e) => update("subStrand", e.target.value)} placeholder="Official curriculum sub-strand"/></label>
       <label className="lesson-wide">Content Standard<textarea value={note.contentStandard} onChange={(e) => update("contentStandard", e.target.value)} placeholder="Enter the exact standard and code"/></label>
