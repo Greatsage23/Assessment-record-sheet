@@ -16,7 +16,7 @@ const emptyDay = (): DayRow => ({ dayDate: "", starter: "", main: "", reflection
 const initialNote: LessonNote = {
   teacherName: "", school: "1st November 1954 J.H.S.", className: "Basic 7", week: "1", weekEnding: "",
   subject: "Computing", strand: "", subStrand: "", contentStandard: "", indicators: "",
-  performanceIndicator: "", classSize: "", duration: "60 minutes", references: "NaCCA Computing Curriculum and approved Basic 7 Computing textbook.",
+  performanceIndicator: "", classSize: "", duration: "70 minutes", references: "NaCCA Computing Curriculum and approved Basic 7 Computing textbook.",
   resources: "Computers or laptops, projector, charts, approved textbook, videos and practical equipment.",
   competencies: "Digital Literacy; Communication and Collaboration; Critical Thinking and Problem-Solving",
   days: [emptyDay(), emptyDay(), emptyDay()],
@@ -37,18 +37,22 @@ const competenciesBySubject: Record<string, string> = {
 
 function weeklyActivities(subject: string, className: string, week: string, strand: string, subStrand: string): DayRow[] {
   const topic = subStrand.split(" — ")[0];
-  if (strand === "Revision") return [
+  const coreSubject = ["English Language", "Mathematics", "Science", "Social Studies"].includes(subject);
+  let rows: DayRow[];
+  if (strand === "Revision") rows = [
     { dayDate: "Tuesday", starter: `Learners recall the major ${subject} concepts studied during the term and identify areas requiring clarification.`, main: `1. Teacher organises learners into groups to review the strands and sub-strands covered.\n2. Learners complete guided revision activities on ${topic}.\n3. Groups compare answers, explain their reasoning and correct misconceptions.\n4. Teacher provides individual support and a short BECE-style practice task.`, reflection: "Learners state the concepts they can now explain confidently. Teacher reviews difficult items and gives a short individual revision exercise." },
     { dayDate: "Friday", starter: "Learners respond to a short oral quiz based on the term's work.", main: `1. Learners complete a mixed individual exercise covering the term.\n2. Teacher discusses answers and acceptable response methods.\n3. Learners correct their work and prepare a personal examination checklist.`, reflection: "Review examination techniques and correct remaining misconceptions. Learners complete a short exit task." },
   ];
-  if (strand === "End-of-Term Examination") return [
+  else if (strand === "End-of-Term Examination") rows = [
     { dayDate: "Tuesday", starter: "Teacher explains the assessment instructions and confirms that learners understand the required procedures.", main: `Learners complete the end-of-term ${subject} assessment independently under the school's examination conditions.`, reflection: "Teacher collects and checks all scripts or practical evidence according to school procedures." },
     { dayDate: "Thursday", starter: "Teacher returns to common areas of difficulty identified during assessment.", main: "Teacher leads feedback and correction activities. Learners explain improved answers and record corrections in their exercise books.", reflection: "Learners identify one strength and one area for continued improvement." },
   ];
-  return [
+  else rows = [
     { dayDate: "Tuesday", starter: `Display or describe a familiar example connected to ${topic}. Learners share what they already know and suggest where the idea is used in daily life.`, main: `1. Introduce the lesson purpose and key vocabulary for ${topic}.\n2. Use the listed resources to model or explain the central idea.\n3. Learners work in pairs to observe, discuss, classify, calculate, read, create or demonstrate as appropriate for ${subject}.\n4. Groups report their findings while the teacher clarifies accurate concepts and corrects misconceptions.\n5. Learners complete a guided task appropriate for ${className}.`, reflection: `Through questions and answers, learners explain the key ideas in ${topic}. Teacher summarises the lesson and gives a short individual exercise aligned with the lesson indicator.` },
     { dayDate: "Friday", starter: `Review the previous lesson on ${topic} through a quick quiz, demonstration or think-pair-share activity.`, main: `1. Learners apply ${topic} to a practical, written or real-life problem.\n2. Individuals first attempt the task, then compare approaches in groups.\n3. Teacher observes performance, asks probing questions and supports learners who need help.\n4. Groups present or demonstrate their work using appropriate ${subject} language.\n5. Learners improve their work from peer and teacher feedback.`, reflection: `Learners state or demonstrate what they can now do. Teacher corrects misconceptions, records observed progress and assigns a short practice task or homework.` },
   ];
+  if (coreSubject) rows.splice(1, 0, { dayDate: "Wednesday", starter: `Learners revisit the first lesson on ${topic} by explaining one important idea to a partner.`, main: `1. Teacher reviews progress from the first lesson and models a more challenging example.\n2. Learners complete an individual ${subject} task based on ${topic}.\n3. Learners compare answers or products in small groups and justify their choices.\n4. Teacher provides corrective feedback and supports learners who require remediation.\n5. Learners apply the improved understanding in a second task.`, reflection: `Learners summarise their new understanding of ${topic}. Teacher uses oral questions, observation and a short written exercise to assess progress.` });
+  return rows;
 }
 
 function curriculumStatements(subject: string, className: string, strand: string, subStrand: string) {
@@ -124,6 +128,7 @@ export default function LessonNotes() {
       contentStandard: statements.contentStandard,
       indicators: statements.indicators,
       performanceIndicator: statements.performanceIndicator,
+      duration: "70 minutes",
       weekEnding: row.date,
       references: `NaCCA ${subject} Curriculum and approved ${className} ${subject} textbook; Teacher Resource Pack; Learner Resource Pack.`,
       resources: row.resources,
