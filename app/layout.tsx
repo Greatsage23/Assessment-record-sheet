@@ -13,11 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ClassRecord | Teacher Assessment",
-  description: "Record student assessment scores, calculate grades, and review class performance.",
-  other: {
-    "codex-preview": "development",
-  },
+  title: "1st November 1954 J.H.S. | Assessment Record Management System",
+  description: "Manage student records, assessment scores and academic performance for 1st November 1954 J.H.S.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",

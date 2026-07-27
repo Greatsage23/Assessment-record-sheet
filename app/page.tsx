@@ -84,6 +84,36 @@ function Icon({ name, size = 22 }: { name: string; size?: number }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg>;
 }
 
+function PerformanceTrend({ values }: { values: Array<{ term: string; average: number | null }> }) {
+  const recorded = values.filter((item): item is { term: string; average: number } => item.average !== null);
+  const points = recorded.map((item) => {
+    const sourceIndex = values.findIndex((entry) => entry.term === item.term);
+    return { ...item, x: 48 + sourceIndex * (452 / Math.max(values.length - 1, 1)), y: 190 - item.average * 1.45 };
+  });
+  const path = points.map((point, index) => `${index ? "L" : "M"}${point.x},${point.y}`).join(" ");
+  return <div className="performance-chart" aria-label="Class average by term">
+    <svg viewBox="0 0 540 230" role="img">
+      {[0, 25, 50, 75, 100].map((value) => <g key={value}><line x1="48" x2="500" y1={190 - value * 1.45} y2={190 - value * 1.45}/><text x="8" y={195 - value * 1.45}>{value}%</text></g>)}
+      {path && <><path className="trend-fill" d={`${path} L${points.at(-1)?.x},190 L${points[0]?.x},190 Z`}/><path className="trend-line" d={path}/>{points.map((point) => <g key={point.term}><circle cx={point.x} cy={point.y} r="5"/><text className="point-value" x={point.x} y={point.y - 12}>{point.average}%</text></g>)}</>}
+    </svg>
+    <div className="chart-labels">{values.map((item) => <span key={item.term}>{item.term}<small>{item.average === null ? "No data" : `${item.average}%`}</small></span>)}</div>
+    {!recorded.length && <div className="chart-empty">Record scores to display the performance trend.</div>}
+  </div>;
+}
+
+function ScoreDistribution({ students, onViewScorebook }: { students: Student[]; onViewScorebook: () => void }) {
+  const ranges = [
+    { label: "80% and above", count: students.filter((student) => student.classScore + student.examScore >= 80).length, color: "#087443" },
+    { label: "60%–79%", count: students.filter((student) => { const score = student.classScore + student.examScore; return score >= 60 && score < 80; }).length, color: "#42a56f" },
+    { label: "40%–59%", count: students.filter((student) => { const score = student.classScore + student.examScore; return score >= 40 && score < 60; }).length, color: "#e6b325" },
+    { label: "20%–39%", count: students.filter((student) => { const score = student.classScore + student.examScore; return score >= 20 && score < 40; }).length, color: "#ed8c3c" },
+    { label: "Below 20%", count: students.filter((student) => student.classScore + student.examScore < 20).length, color: "#ef4444" },
+  ];
+  let cursor = 0;
+  const gradient = students.length ? ranges.map((range) => { const start = cursor; cursor += (range.count / students.length) * 100; return `${range.color} ${start}% ${cursor}%`; }).join(",") : "#e9efec 0 100%";
+  return <><div className="distribution-visual"><div className="donut" style={{ background: `conic-gradient(${gradient})` }}><span><strong>{students.length}</strong>Students</span></div></div><div className="range-list">{ranges.map((range) => <div key={range.label}><i style={{ background: range.color }}/><span>{range.label}</span><b>{range.count}</b><small>{students.length ? Math.round(range.count / students.length * 100) : 0}%</small></div>)}</div><div className="distribution-foot"><span>Data based on {students.length} recorded score{students.length === 1 ? "" : "s"}</span><button onClick={onViewScorebook}>View full scorebook →</button></div></>;
+}
+
 function gradeFor(total: number) {
   if (total >= 80) return "A";
   if (total >= 70) return "B";
@@ -106,10 +136,13 @@ function nextRosterIndex(roster: RosterStudent[]) {
 
 export default function Home() {
   const [students, setStudents] = useState<Student[]>([]);
-  const [view, setView] = useState<View>("scorebook");
+  const [view, setView] = useState<View>("dashboard");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const [notificationOpen, setNotificationOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [termAverages, setTermAverages] = useState<Array<{ term: string; average: number | null }>>([]);
   const [modal, setModal] = useState<"subjectLogin" | "scores" | "report" | null>(null);
   const [filter, setFilter] = useState({ className: "Basic 8 Red", subject: "Mathematics", term: "Term 1" });
   const [overallGrade, setOverallGrade] = useState("Basic 8");
@@ -169,6 +202,19 @@ export default function Home() {
     const timer = window.setTimeout(() => { void loadStudents(); }, 0);
     return () => window.clearTimeout(timer);
   }, [loadStudents]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    Promise.all(["Term 1", "Term 2", "Term 3"].map(async (term) => {
+      const params = new URLSearchParams({ className: filter.className, subject: filter.subject, term });
+      const response = await fetch(`/api/records?${params}`, { signal: controller.signal });
+      if (!response.ok) return { term, average: null };
+      const data = await response.json() as { students: Student[] };
+      const average = data.students.length ? Math.round(data.students.reduce((sum, student) => sum + student.classScore + student.examScore, 0) / data.students.length) : null;
+      return { term, average };
+    })).then(setTermAverages).catch(() => undefined);
+    return () => controller.abort();
+  }, [filter.className, filter.subject]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -561,8 +607,8 @@ export default function Home() {
           <div className="topbar-identity"><img src="/school-logo.png" alt=""/><div><p className="school-dashboard-name">{SCHOOL_NAME}</p><span>Assessment Record Management System</span></div></div>
           <div className="top-actions">
             <label className="searchbox"><Icon name="search" size={19}/><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search students..." aria-label="Search students"/></label>
-            <button className="icon-btn" aria-label="Notifications"><Icon name="bell"/></button>
-            <div className="profile"><span className="avatar teacher">IA</span><span><strong>Teacher</strong><small>Assessment manager</small></span></div>
+            <div className="menu-anchor"><button className="icon-btn notification-button" aria-label="Notifications" aria-expanded={notificationOpen} onClick={() => { setNotificationOpen(!notificationOpen); setProfileOpen(false); }}><Icon name="bell"/><i/></button>{notificationOpen && <div className="header-menu notification-menu"><strong>Notifications</strong><p>You have no new notifications.</p></div>}</div>
+            <div className="menu-anchor"><button className="profile profile-button" aria-expanded={profileOpen} onClick={() => { setProfileOpen(!profileOpen); setNotificationOpen(false); }}><span className="avatar teacher">IA</span><span><strong>Teacher</strong><small>Assessment manager</small></span><span className="profile-chevron">⌄</span></button>{profileOpen && <div className="header-menu profile-menu"><strong>Teacher account</strong><button onClick={() => setView("settings")}>Assessment settings</button><button onClick={() => setProfileOpen(false)}>Close menu</button></div>}</div>
           </div>
         </header>
 
@@ -580,16 +626,18 @@ export default function Home() {
 
         {(view === "scorebook" || view === "dashboard") && <>
           <section className="metrics">
-            <article><span className="metric-icon navy"><Icon name="users" size={25}/></span><div><small>Students</small><strong>{students.length}</strong><span>Official class roster</span></div></article>
-            <article><span className="metric-icon green"><Icon name="chart" size={25}/></span><div><small>Class average</small><strong>{average}%</strong><span>Based on recorded scores</span></div></article>
-            <article><span className="metric-icon gold"><Icon name="trophy" size={25}/></span><div><small>Pass rate</small><strong>{passRate}%</strong><span>{passed} of {students.length} students</span></div></article>
-            {hasPerformance && <article><span className="metric-icon teal"><Icon name="trophy" size={25}/></span><div><small>Highest score</small><strong>{highest}%</strong><span>Current selection</span></div></article>}
+            <article><span className="metric-icon navy"><Icon name="users" size={25}/></span><div><small>Students</small><strong>{students.length}</strong><span>Official class roster</span><em>Current selection</em></div></article>
+            <article><span className="metric-icon green"><Icon name="chart" size={25}/></span><div><small>Class average</small><strong>{average}%</strong><span>Based on recorded scores</span><em>Live assessment data</em></div></article>
+            <article><span className="metric-icon gold"><Icon name="trophy" size={25}/></span><div><small>Pass rate</small><strong>{passRate}%</strong><span>{passed} of {students.length} students</span><em>Pass mark: 50%</em></div></article>
+            <article><span className="metric-icon teal"><Icon name="trophy" size={25}/></span><div><small>Highest score</small><strong>{hasPerformance ? `${highest}%` : "—"}</strong><span>Current selection</span><em>{hasPerformance ? "Recorded performance" : "No scores yet"}</em></div></article>
           </section>
           {view === "dashboard" && <button className="scheme-dashboard-cta" onClick={() => setView("schemes")}><Icon name="book" size={22}/><span><strong>View Scheme of Work</strong><small>Browse approved curriculum documents by level, term and subject.</small></span></button>}
           <ScoreTable students={visible} loading={loading} onManageStudents={() => { setView("administrator"); setAdminSection("students"); }} />
+          {view === "dashboard" && <section className="academic-analytics" aria-label="Academic performance analytics">
+            <article className="analytics-card performance-trend-card"><div className="analytics-head"><div><span className="analytics-icon"><Icon name="chart" size={20}/></span><div><h2>Academic Performance Trend</h2><p>Class average by term</p></div></div><div className="analytics-controls"><select aria-label="Chart type" defaultValue="Line chart"><option>Line chart</option></select><button aria-label="More chart options">•••</button></div></div><PerformanceTrend values={termAverages}/></article>
+            <article className="analytics-card score-distribution-card"><div className="analytics-head"><div><span className="analytics-icon gold"><Icon name="chart" size={20}/></span><div><h2>Score Distribution</h2><p>Current assessment overview</p></div></div><div className="analytics-controls"><select aria-label="Score range" defaultValue="All ranges"><option>All ranges</option></select><button aria-label="More distribution options">•••</button></div></div><ScoreDistribution students={students} onViewScorebook={() => setView("scorebook")}/></article>
+          </section>}
           {view === "dashboard" && hasPerformance && <section className="dashboard-insights" aria-label="Assessment insights">
-            <article className="insight-card distribution-card"><div className="insight-head"><div><span>Performance insight</span><h2>Grade distribution</h2></div><Icon name="chart" size={21}/></div><div className="distribution-bars">{gradeDistribution.map((item) => <div key={item.grade}><b className={`grade grade-${item.grade.toLowerCase()}`}>{item.grade}</b><span><i style={{ width: `${students.length ? (item.count / students.length) * 100 : 0}%` }}/></span><strong>{item.count}</strong></div>)}</div></article>
-            <article className="insight-card"><div className="insight-head"><div><span>{filter.subject}</span><h2>Subject performance</h2></div><Icon name="book" size={21}/></div><div className="subject-overview"><strong>{average}%</strong><span>Class average</span><div><b>{highest}%</b><small>Highest score</small></div><div><b>{passRate}%</b><small>Pass rate</small></div></div></article>
             <article className="insight-card"><div className="insight-head"><div><span>Current selection</span><h2>Top-performing students</h2></div><Icon name="trophy" size={21}/></div><div className="student-insight-list">{topStudents.map((student, index) => <div key={student.id}><span className="rank">{index + 1}</span><p><strong>{student.name}</strong><small>{student.studentCode}</small></p><b>{student.classScore + student.examScore}%</b></div>)}</div></article>
             {supportStudents.length > 0 && <article className="insight-card support-card"><div className="insight-head"><div><span>Academic support</span><h2>Students requiring support</h2></div><Icon name="alert" size={21}/></div><div className="student-insight-list">{supportStudents.map((student) => <div key={student.id}><span className="support-dot"/><p><strong>{student.name}</strong><small>{student.studentCode}</small></p><b>{student.classScore + student.examScore}%</b></div>)}</div></article>}
           </section>}
@@ -689,6 +737,7 @@ export default function Home() {
         </section>}
 
         {view === "settings" && <section className="panel settings-panel"><div className="panel-head"><div><h2>Assessment structure</h2><p>Current scoring and grading rules.</p></div></div><div className="setting-row"><div><strong>Class assessment</strong><span>Exercises, projects and class tests</span></div><b>30 marks</b></div><div className="setting-row"><div><strong>End-of-term examination</strong><span>Final examination score</span></div><b>70 marks</b></div><div className="setting-row"><div><strong>Pass mark</strong><span>Scores below this mark need support</span></div><b>50%</b></div><div className="grade-key"><span>A · 80–100</span><span>B · 70–79</span><span>C · 60–69</span><span>D · 50–59</span><span>F · Below 50</span></div></section>}
+        <footer className="app-footer"><span>© {new Date().getFullYear()} 1ST NOVEMBER 1954 J.H.S. All rights reserved.</span><span>Assessment Record Management System</span></footer>
       </section>
 
       {modal === "subjectLogin" && <div className="modal-backdrop"><div className="modal subject-login-modal" role="dialog" aria-modal="true" aria-labelledby="subject-login-title"><div className="modal-head"><div><p className="eyebrow">Teacher verification</p><h2 id="subject-login-title">Unlock score entry</h2></div><button onClick={() => setModal(null)} aria-label="Close"><Icon name="close"/></button></div><div className="subject-access-target"><span>🔒</span><div><strong>{filter.subject}</strong><small>{filter.className} · {filter.term}</small></div></div><p className="modal-note">Enter the password assigned by the administrator for this exact class and subject.</p><form onSubmit={unlockSubject}><label>Subject password<input type="password" required value={subjectPassword} onChange={(event) => setSubjectPassword(event.target.value)} placeholder="Enter assigned password" autoFocus /></label><div className="modal-actions"><button type="button" className="secondary" onClick={() => setModal(null)}>Cancel</button><button className="primary" type="submit">Unlock score entry</button></div></form></div></div>}
