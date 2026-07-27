@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import SchemeOfWork from "./scheme-of-work";
 import QuestionBank from "./question-bank";
+import LessonNotes from "./lesson-notes";
 import "./resources.css";
 
 type Student = {
@@ -654,7 +655,7 @@ export default function Home() {
           </div>
         </section>}
         {view === "schemes" && <><button className="resource-back" onClick={() => setView("resources")}>← Back to Resources</button><SchemeOfWork /></>}
-        {view === "lessonNotes" && <section className="lesson-notes-empty panel"><button className="resource-back" onClick={() => setView("resources")}>← Back to Resources</button><span className="lesson-notes-icon"><Icon name="file" size={32}/></span><p className="eyebrow">Teaching resources</p><h2>Lesson Notes</h2><p>No lesson notes have been added yet. This section is ready for lesson-note resources.</p></section>}
+        {view === "lessonNotes" && <><button className="resource-back" onClick={() => setView("resources")}>← Back to Resources</button><LessonNotes /></>}
         {view === "questions" && <><button className="resource-back" onClick={() => setView("resources")}>← Back to Resources</button><QuestionBank /></>}
 
         {view === "administrator" && !adminUnlocked && <section className="admin-lock panel">
