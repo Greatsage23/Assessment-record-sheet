@@ -3,6 +3,7 @@ import { ensureDatabase, getDb } from "../../../db";
 import { attendance, records, studentRoster } from "../../../db/schema";
 
 const ADMIN_PASSWORD = "administrator";
+const HEADTEACHER_PASSWORD = process.env.HEADTEACHER_PASSWORD || "head";
 const SUBJECTS = [
   "English Language", "Mathematics", "Science", "Social Studies", "Computing",
   "Religious and Moral Education", "Creative Arts and Design", "Career Technology",
@@ -13,7 +14,7 @@ const TERMS = ["Term 1", "Term 2", "Term 3"] as const;
 type RosterInput = { id?: number; studentCode?: string; name?: string; className?: string };
 
 function isAdministrator(payload: { password?: string }) {
-  return payload.password === ADMIN_PASSWORD;
+  return payload.password === ADMIN_PASSWORD || payload.password === HEADTEACHER_PASSWORD;
 }
 
 function cleanStudent(input: RosterInput) {
@@ -62,7 +63,7 @@ export async function POST(request: Request) {
   try {
     await ensureDatabase();
     const payload = await request.json() as { password?: string; students?: RosterInput[] };
-    if (!isAdministrator(payload)) return Response.json({ error: "Incorrect administrator password." }, { status: 401 });
+    if (!isAdministrator(payload)) return Response.json({ error: "Incorrect management password." }, { status: 401 });
     const db = await getDb();
 
     const students = payload.students ?? [];
@@ -103,7 +104,7 @@ export async function DELETE(request: Request) {
   try {
     await ensureDatabase();
     const payload = await request.json() as { password?: string; id?: number };
-    if (!isAdministrator(payload)) return Response.json({ error: "Incorrect administrator password." }, { status: 401 });
+    if (!isAdministrator(payload)) return Response.json({ error: "Incorrect management password." }, { status: 401 });
     if (!payload.id) return Response.json({ error: "Student record is required." }, { status: 400 });
     const db = await getDb();
     const [student] = await db.select().from(studentRoster).where(eq(studentRoster.id, payload.id)).limit(1);

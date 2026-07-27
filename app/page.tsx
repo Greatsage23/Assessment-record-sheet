@@ -158,7 +158,9 @@ export default function Home() {
   const [adminPassword, setAdminPassword] = useState("");
   const [adminUnlocked, setAdminUnlocked] = useState(false);
   const [adminLoginPending, setAdminLoginPending] = useState(false);
-  const [adminSection, setAdminSection] = useState<AdminSection>("students");
+  const [adminSection, setAdminSection] = useState<AdminSection>("passwords");
+  const [headManagementSection, setHeadManagementSection] = useState<"students" | "teachers">("students");
+  const headteacherPassword = "head";
   const [subjectPassword, setSubjectPassword] = useState("");
   const [passwordForm, setPasswordForm] = useState({ className: "Basic 8 Red", subject: "Mathematics", password: "" });
   const [configuredPasswords, setConfiguredPasswords] = useState<{ className: string; subject: string; updatedAt: string }[]>([]);
@@ -285,7 +287,7 @@ export default function Home() {
   }
 
   const loadRoster = useCallback(async () => {
-    if (!adminUnlocked) return;
+    if (!adminUnlocked && view !== "headteacher") return;
     setRosterLoading(true);
     try {
       const params = new URLSearchParams({ className: filter.className });
@@ -295,7 +297,7 @@ export default function Home() {
     } finally {
       setRosterLoading(false);
     }
-  }, [adminUnlocked, filter.className]);
+  }, [adminUnlocked, filter.className, view]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => { void loadRoster(); }, 0);
@@ -340,18 +342,22 @@ export default function Home() {
     setTeacherAssignments(data.assignments ?? []);
   }
 
+  useEffect(() => {
+    if (view === "headteacher") void loadTeacherAssignments(headteacherPassword);
+  }, [view]);
+
   async function saveSubjectTeacher(event: FormEvent) {
     event.preventDefault();
     const response = await fetch("/api/teachers", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "set", adminPassword, ...teacherForm }),
+      body: JSON.stringify({ action: "set", adminPassword: view === "headteacher" ? headteacherPassword : adminPassword, ...teacherForm }),
     });
     const data = await response.json() as { error?: string };
     if (!response.ok) return setMessage(data.error ?? "The subject teacher could not be saved.");
     setMessage(`${teacherForm.teacherName} assigned to ${teacherForm.subject} · ${teacherForm.className}.`);
     if (teacherForm.className === filter.className && teacherForm.subject === filter.subject) setSelectedTeacher(teacherForm.teacherName.trim());
     setTeacherForm({ ...teacherForm, teacherName: "" });
-    await loadTeacherAssignments();
+    await loadTeacherAssignments(view === "headteacher" ? headteacherPassword : adminPassword);
   }
 
   async function loadConfiguredPasswords(password = adminPassword) {
@@ -457,7 +463,7 @@ export default function Home() {
   async function addRosterStudents(studentsToAdd: { name: string }[]) {
     const response = await fetch("/api/roster", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password: adminPassword, students: studentsToAdd.map((student) => ({ ...student, className: filter.className })) }),
+      body: JSON.stringify({ password: view === "headteacher" ? headteacherPassword : adminPassword, students: studentsToAdd.map((student) => ({ ...student, className: filter.className })) }),
     });
     const data = await response.json() as { error?: string; added?: number };
     if (!response.ok) {
@@ -493,7 +499,7 @@ export default function Home() {
     if (!confirm(`Remove ${student.name} from the student list, all subjects, and report cards?`)) return;
     const response = await fetch("/api/roster", {
       method: "DELETE", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password: adminPassword, id: student.id }),
+      body: JSON.stringify({ password: view === "headteacher" ? headteacherPassword : adminPassword, id: student.id }),
     });
     setMessage(response.ok ? `${student.name} was removed from every subject.` : "The student could not be removed.");
     if (response.ok) await Promise.all([loadRoster(), loadStudents()]);
@@ -640,7 +646,7 @@ export default function Home() {
           </section>
           {view === "dashboard" && <button className="scheme-dashboard-cta" onClick={() => setView("resources")}><Icon name="folder" size={22}/><span><strong>Resources</strong><small>Open schemes of work and lesson notes for classroom planning.</small></span></button>}
           {view === "dashboard" && <div className="dashboard-role-actions"><button onClick={() => setView("teacher")}><span><Icon name="users" size={23}/></span><div><strong>Teacher</strong><small>Prepare, edit and submit lesson notes.</small></div></button><button onClick={() => setView("headteacher")}><span><Icon name="headteacher" size={23}/></span><div><strong>Headteacher</strong><small>Vet and approve submitted lesson notes.</small></div></button></div>}
-          <ScoreTable students={visible} loading={loading} onManageStudents={() => { setView("administrator"); setAdminSection("students"); }} />
+          <ScoreTable students={visible} loading={loading} onManageStudents={() => { setView("headteacher"); setHeadManagementSection("students"); }} />
           {view === "dashboard" && <section className="academic-analytics" aria-label="Academic performance analytics">
             <article className="analytics-card performance-trend-card"><div className="analytics-head"><div><span className="analytics-icon"><Icon name="chart" size={20}/></span><div><h2>Academic Performance Trend</h2><p>Class average by term</p></div></div><div className="analytics-controls"><select aria-label="Chart type" defaultValue="Line chart"><option>Line chart</option></select><button aria-label="More chart options">•••</button></div></div><PerformanceTrend values={termAverages}/></article>
             <article className="analytics-card score-distribution-card"><div className="analytics-head"><div><span className="analytics-icon gold"><Icon name="chart" size={20}/></span><div><h2>Score Distribution</h2><p>Current assessment overview</p></div></div><div className="analytics-controls"><select aria-label="Score range" defaultValue="All ranges"><option>All ranges</option></select><button aria-label="More distribution options">•••</button></div></div><ScoreDistribution students={students} onViewScorebook={() => setView("scorebook")}/></article>
@@ -663,17 +669,20 @@ export default function Home() {
         {view === "lessonNotes" && <><button className="resource-back" onClick={() => setView("resources")}>← Back to Resources</button><LessonNotes /></>}
         {view === "questions" && <><button className="resource-back" onClick={() => setView("resources")}>← Back to Resources</button><QuestionBank /></>}
         {view === "teacher" && <section className="teacher-workspace"><div className="teacher-workspace-hero"><span><Icon name="users" size={30}/></span><div><p className="eyebrow">Teacher workspace</p><h2>Prepare and submit weekly lesson notes</h2><p>Open Lesson Notes under Resources, load the correct subject, class and week, edit the content and submit it to the headteacher.</p><button className="primary" onClick={() => setView("lessonNotes")}><Icon name="file" size={18}/>Open Lesson Notes</button></div></div><div className="teacher-workflow"><article><b>1</b><span><strong>Prepare</strong><small>Load the weekly note from the Scheme of Work.</small></span></article><article><b>2</b><span><strong>Edit</strong><small>Verify curriculum codes and refine every lesson phase.</small></span></article><article><b>3</b><span><strong>Submit</strong><small>Send the completed note to the headteacher for vetting.</small></span></article></div></section>}
-        {view === "headteacher" && <HeadteacherDashboard />}
+        {view === "headteacher" && <HeadteacherDashboard><section className="headteacher-management"><div className="headteacher-management-head"><div><h2>School Management</h2><p>Manage the official student roster and subject-teacher assignments.</p></div><label>Class<select value={filter.className} onChange={(event) => setFilter({ ...filter, className: event.target.value })}>{SCHOOL_CLASSES.map((className) => <option key={className}>{className}</option>)}</select></label></div><div className="admin-section-tabs"><button className={headManagementSection === "students" ? "active" : ""} onClick={() => setHeadManagementSection("students")}><Icon name="users" size={19}/>Student List</button><button className={headManagementSection === "teachers" ? "active" : ""} onClick={() => setHeadManagementSection("teachers")}><Icon name="users" size={19}/>Subject Teachers</button></div>
+          {headManagementSection === "students" && <><section className="panel roster-tools"><div className="panel-head"><div><h2>Add or upload students</h2><p>{filter.className} · The official roster shared by every subject teacher</p></div></div><div className="roster-actions"><form onSubmit={addRosterStudent}><label>Student name<input required value={rosterForm.name} onChange={(event) => setRosterForm({ name: event.target.value })} placeholder="Full name"/></label><label>Index number<input value="Generated automatically" readOnly aria-label="Index number generated automatically"/></label><button className="primary" type="submit"><Icon name="plus" size={18}/>Add to all subjects</button></form><div className="upload-box"><Icon name="download" size={28}/><strong>Upload student list</strong><span>Excel/CSV: Student names in column A. Index numbers are generated automatically.</span><label className="secondary">Choose Excel file<input type="file" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadRoster(file); }}/></label></div></div></section><section className="panel attendance-panel"><div className="panel-head"><div><h2>Official student list</h2><p>{filter.className} · Index numbers are assigned automatically in ascending order.</p></div></div><div className="table-scroll"><table><thead><tr><th>Index number</th><th>Student</th><th>Class</th><th>Action</th></tr></thead><tbody>{rosterLoading ? <tr><td colSpan={4} className="empty">Loading the official student list…</td></tr> : roster.length === 0 ? <tr><td colSpan={4} className="empty">No students have been added to {filter.className} yet.</td></tr> : roster.map((student, index) => <tr key={student.id}><td><strong>{student.studentCode}</strong></td><td><span className={`avatar small tone-${index % 5}`}>{initials(student.name)}</span><span><strong>{student.name}</strong></span></td><td>{student.className}</td><td><button className="danger-icon" onClick={() => void removeRosterStudent(student)} aria-label={`Remove ${student.name}`}><Icon name="trash" size={17}/></button></td></tr>)}</tbody></table></div><div className="attendance-save"><span>{roster.length} student{roster.length === 1 ? "" : "s"} in the official list</span><strong>Next index: {nextRosterIndex(roster)}</strong></div></section></>}
+          {headManagementSection === "teachers" && <section className="teacher-admin-grid"><section className="panel teacher-assignment"><div className="panel-head"><div><h2>Assign subject teacher</h2><p>Select a class and subject, then enter the responsible teacher&apos;s name.</p></div></div><form onSubmit={saveSubjectTeacher}><label>Class<select value={teacherForm.className} onChange={(event) => setTeacherForm({ ...teacherForm, className: event.target.value })}>{SCHOOL_CLASSES.map((className) => <option key={className}>{className}</option>)}</select></label><label>Subject<select value={teacherForm.subject} onChange={(event) => setTeacherForm({ ...teacherForm, subject: event.target.value })}>{JHS_SUBJECTS.map((subject) => <option key={subject}>{subject}</option>)}</select></label><label>Teacher name<input required value={teacherForm.teacherName} onChange={(event) => setTeacherForm({ ...teacherForm, teacherName: event.target.value })} placeholder="Enter the teacher's full name"/></label><button className="primary" type="submit">Save teacher assignment</button></form></section><section className="panel teacher-directory"><div className="panel-head"><div><h2>Subject teacher directory</h2><p>{teacherAssignments.length} class–subject assignment{teacherAssignments.length === 1 ? "" : "s"} saved</p></div></div><div>{teacherAssignments.length === 0 ? <p className="empty-passwords">No subject teachers have been assigned yet.</p> : teacherAssignments.map((item) => <article key={`${item.className}-${item.subject}`}><span className="avatar small">{initials(item.teacherName)}</span><div><strong>{item.teacherName}</strong><small>{item.subject} · {item.className}</small></div></article>)}</div></section></section>}
+        </section></HeadteacherDashboard>}
 
         {view === "administrator" && !adminUnlocked && <section className="admin-lock panel">
           <span className="admin-lock-icon">🔐</span><p className="eyebrow">Restricted area</p><h2>Administrator access required</h2>
-          <p>Log in to manage the official student list, subject teachers and subject-teacher passwords.</p>
+          <p>Log in to manage subject-teacher passwords and Scheme of Work documents.</p>
           <form onSubmit={unlockAdministrator}><label>Password<input type="password" value={adminPassword} onChange={(event) => setAdminPassword(event.target.value)} placeholder="Enter administrator password" autoFocus disabled={adminLoginPending} /></label><button className="primary" type="submit" disabled={adminLoginPending}>{adminLoginPending ? "Signing in…" : "Login as Administrator"}</button></form>
         </section>}
 
         {view === "administrator" && adminUnlocked && <section className="attendance-layout">
-          <div className="attendance-banner"><div><p>Administrator only</p><h2>School Administration</h2><span>Manage the student list, subject teachers and teacher access passwords.</span></div><button className="secondary" onClick={() => { setAdminUnlocked(false); setAdminPassword(""); setAdminSection("students"); }}>Logout administrator</button></div>
-          <div className="admin-section-tabs"><button className={adminSection === "students" ? "active" : ""} onClick={() => setAdminSection("students")}><Icon name="users" size={19}/>Student List</button><button className={adminSection === "teachers" ? "active" : ""} onClick={() => setAdminSection("teachers")}><Icon name="users" size={19}/>Subject Teachers</button><button className={adminSection === "passwords" ? "active" : ""} onClick={() => setAdminSection("passwords")}>🔑 Password</button><button className={adminSection === "schemes" ? "active" : ""} onClick={() => setAdminSection("schemes")}><Icon name="book" size={19}/>Scheme of Work</button></div>
+          <div className="attendance-banner"><div><p>Administrator only</p><h2>System Administration</h2><span>Manage teacher access passwords and Scheme of Work documents.</span></div><button className="secondary" onClick={() => { setAdminUnlocked(false); setAdminPassword(""); setAdminSection("passwords"); }}>Logout administrator</button></div>
+          <div className="admin-section-tabs"><button className={adminSection === "passwords" ? "active" : ""} onClick={() => setAdminSection("passwords")}>🔑 Password</button><button className={adminSection === "schemes" ? "active" : ""} onClick={() => setAdminSection("schemes")}><Icon name="book" size={19}/>Scheme of Work</button></div>
           {adminSection === "students" && <>
           <section className="panel roster-tools">
             <div className="panel-head"><div><h2>Add or upload students</h2><p>{filter.className} · The official roster shared by every subject teacher</p></div></div>

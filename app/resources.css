@@ -80,6 +80,13 @@
 .headteacher-lock label { display:grid; gap:7px; color:#41564d; font-size:12px; font-weight:750; }
 .headteacher-lock input { height:44px; padding:0 12px; border:1px solid #d5e0da; border-radius:9px; }
 .headteacher-review { display:grid; gap:17px; }
+.headteacher-management { display:grid; gap:14px; padding:18px; border:1px solid #dce5e0; border-radius:15px; background:#f7f9f8; }
+.headteacher-management-head { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; }
+.headteacher-management-head h2 { margin:0 0 4px; color:#14271f; font-size:19px; }
+.headteacher-management-head p { margin:0; color:#718078; font-size:12px; }
+.headteacher-management-head label { display:grid; gap:6px; color:#41564d; font-size:11px; font-weight:750; }
+.headteacher-management-head select { min-width:180px; height:40px; padding:0 10px; border:1px solid #d5e0da; border-radius:9px; background:#fff; }
+.headteacher-management .admin-section-tabs { margin:0; }
 .headteacher-banner { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:24px 26px; border-radius:16px; color:#fff; background:#071f38; }
 .headteacher-banner p { margin:0 0 3px; color:#e6b325; font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
 .headteacher-banner h2 { margin:0 0 5px; font-size:23px; }
@@ -122,7 +129,7 @@
   .lesson-day-list article { grid-template-columns:1fr; }
   .lesson-day-head { grid-column:auto; }
   .dashboard-role-actions,.teacher-workflow,.review-summary,.review-curriculum { grid-template-columns:1fr; }
-  .teacher-workspace-hero,.headteacher-banner,.review-card-head { align-items:flex-start; flex-direction:column; }
+  .teacher-workspace-hero,.headteacher-banner,.review-card-head,.headteacher-management-head { align-items:flex-start; flex-direction:column; }
   .review-actions { flex-direction:column; }
   .review-actions button { width:100%; }
 }

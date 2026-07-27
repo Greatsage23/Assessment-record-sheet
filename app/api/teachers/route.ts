@@ -3,6 +3,7 @@ import { ensureDatabase, getDb } from "../../../db";
 import { subjectTeachers } from "../../../db/schema";
 
 const ADMIN_PASSWORD = "administrator";
+const HEADTEACHER_PASSWORD = process.env.HEADTEACHER_PASSWORD || "head";
 
 export async function GET(request: Request) {
   try {
@@ -32,7 +33,7 @@ export async function POST(request: Request) {
       subject?: string;
       teacherName?: string;
     };
-    if (payload.adminPassword !== ADMIN_PASSWORD) return Response.json({ error: "Incorrect administrator password." }, { status: 401 });
+    if (payload.adminPassword !== ADMIN_PASSWORD && payload.adminPassword !== HEADTEACHER_PASSWORD) return Response.json({ error: "Incorrect management password." }, { status: 401 });
     const db = await getDb();
 
     if (payload.action === "list") {
