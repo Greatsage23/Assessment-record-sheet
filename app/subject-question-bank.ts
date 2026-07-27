@@ -2,7 +2,7 @@ import { curriculumTopicsFor } from "./curriculum-topics";
 
 export type CurriculumQuestion = {
   id: number; className: string; subject: string; term: "All Terms"; topic: string;
-  questionType: "Objective" | "Essay"; difficulty: "Easy" | "Moderate" | "Challenging";
+  questionType: "Objective" | "Short Answer" | "Essay"; difficulty: "Easy" | "Moderate" | "Challenging";
   questionText: string; options: string[]; answer: string; marks: number;
   createdBy: string; createdAt: string; source: "Built-in";
 };
@@ -52,7 +52,7 @@ function readingComprehensionBank(className: string): CurriculumQuestion[] {
     const theme = passageThemes[index % passageThemes.length]; const variant = Math.floor(index / passageThemes.length);
     const passage = `${openings[variant]}\n\n${theme.title}\n${theme.body}`;
     const questions = `\n\n(a) What is the passage mainly about? [2 marks]\n(b) State two details from the passage that support its main idea. [4 marks]\n(c) What can the reader infer from the actions of the people in the passage? [3 marks]\n(d) Explain the meaning of “${theme.word}” as used in the passage. [2 marks]\n(e) What does the expression “${theme.reference}” refer to in the passage? [2 marks]\n(f) State one lesson from the passage and support it with evidence. [3 marks]\n(g) Give a suitable alternative title for the passage. [2 marks]\n(h) Identify one feature of the writer's language or organisation that makes the passage effective. [2 marks]`;
-    return { id: stableId(`English-${className}-reading-passage-${index + 1}`), className, subject: "English Language", term: "All Terms", topic: "Reading Comprehension", questionType: "Essay", difficulty: index < 12 ? "Easy" : index < 30 ? "Moderate" : "Challenging", questionText: passage + questions, options: [], marks: 20, createdBy: "Built-in BECE comprehension bank", createdAt: "", source: "Built-in", answer: `(a) ${theme.main} (2 marks)\n(b) Any two: ${theme.details.join("; ")} (2 marks each)\n(c) ${theme.inference} (3 marks)\n(d) ${theme.meaning} (2 marks)\n(e) Award 2 marks for the correct contextual reference to ${theme.reference}.\n(f) Award 1 mark for a valid lesson and 2 marks for supporting evidence.\n(g) Accept a concise title reflecting: ${theme.main} (2 marks)\n(h) Accept a supported feature such as chronological order, contrast, cause and effect, descriptive detail or clear paragraphing (2 marks).` };
+    return { id: stableId(`English-${className}-reading-passage-${index + 1}`), className, subject: "English Language", term: "All Terms", topic: "Reading Comprehension", questionType: "Short Answer", difficulty: index < 12 ? "Easy" : index < 30 ? "Moderate" : "Challenging", questionText: passage + questions, options: [], marks: 20, createdBy: "Built-in BECE comprehension bank", createdAt: "", source: "Built-in", answer: `(a) ${theme.main} (2 marks)\n(b) Any two: ${theme.details.join("; ")} (2 marks each)\n(c) ${theme.inference} (3 marks)\n(d) ${theme.meaning} (2 marks)\n(e) Award 2 marks for the correct contextual reference to ${theme.reference}.\n(f) Award 1 mark for a valid lesson and 2 marks for supporting evidence.\n(g) Accept a concise title reflecting: ${theme.main} (2 marks)\n(h) Accept a supported feature such as chronological order, contrast, cause and effect, descriptive detail or clear paragraphing (2 marks).` };
   });
 }
 
@@ -71,10 +71,31 @@ function expositoryPersuasiveBank(className: string): CurriculumQuestion[] {
   })));
 }
 
+function writtenResponseBank(className: string, topic: string, type: "Short Answer" | "Essay"): CurriculumQuestion[] {
+  const shortStems = ["State four key points about", "Explain three important features of", "Distinguish between two ideas commonly studied in", "Give three examples that demonstrate", "Summarise the main rules or procedures used in", "Read a suitable classroom text and answer five questions on", "Prepare brief notes under four headings on", "Identify and correct four common errors connected with"];
+  const essayStems = ["Write a well-organised composition demonstrating", "Write an article for your school magazine applying", "Write a formal letter that demonstrates", "Write a speech for assembly using the principles of", "Develop a clear five-paragraph response on", "Write a composition with an effective introduction, body and conclusion on", "Produce a functional text that correctly applies", "Write at least 250 words to demonstrate your understanding of"];
+  return Array.from({ length: 40 }, (_, index) => ({
+    id: stableId(`English-${className}-${topic}-${type}-${index + 1}`), className, subject: "English Language", term: "All Terms", topic, questionType: type,
+    difficulty: index < 12 ? "Easy" : index < 30 ? "Moderate" : "Challenging",
+    questionText: type === "Short Answer" ? `${shortStems[index % shortStems.length]} ${topic}. Support each answer with an appropriate example. [10 marks]` : `${essayStems[index % essayStems.length]} ${topic}. Use accurate language, logical paragraphing and relevant details. [30 marks]`,
+    options: [], marks: type === "Short Answer" ? 10 : 30,
+    answer: type === "Short Answer" ? "Award marks for relevant, accurate points and suitable examples: content 6 marks; clarity and organisation 2 marks; grammatical accuracy 2 marks." : "BECE writing rubric: content and relevance 10 marks; organisation 5 marks; expression and vocabulary 10 marks; grammar, spelling and punctuation 5 marks.",
+    createdBy: `Built-in English ${type.toLowerCase()} bank`, createdAt: "", source: "Built-in",
+  }));
+}
+
 export function buildSubjectQuestionBank(subject: string, className: string): CurriculumQuestion[] {
   const topics = curriculumTopicsFor(subject, className);
-  const special: CurriculumQuestion[] = subject === "English Language" ? [...readingComprehensionBank(className), ...(topics.includes("Expository and Persuasive Writing") ? expositoryPersuasiveBank(className) : [])] : [];
-  const standardTopics = topics.filter((topic) => !(subject === "English Language" && ["Reading Comprehension", "Expository and Persuasive Writing"].includes(topic)));
+  const shortAnswerTopics = new Set(["Summary Writing", "Summary and Note-Making", "Media Literacy", "Library and Study Skills"]);
+  const essayTopics = new Set(["Writing and Composition", "Narrative and Descriptive Writing", "Argumentative and Functional Writing"]);
+  const special: CurriculumQuestion[] = subject === "English Language" ? [
+    ...readingComprehensionBank(className),
+    ...(topics.includes("Expository and Persuasive Writing") ? expositoryPersuasiveBank(className) : []),
+    ...topics.filter((topic) => shortAnswerTopics.has(topic)).flatMap((topic) => writtenResponseBank(className, topic, "Short Answer")),
+    ...topics.filter((topic) => essayTopics.has(topic)).flatMap((topic) => writtenResponseBank(className, topic, "Essay")),
+  ] : [];
+  const responseTopics = new Set(["Reading Comprehension", "Expository and Persuasive Writing", ...shortAnswerTopics, ...essayTopics]);
+  const standardTopics = topics.filter((topic) => !(subject === "English Language" && responseTopics.has(topic)));
   const standard = standardTopics.flatMap((topic, topicIndex) => Array.from({ length: 40 }, (_, index) => {
     const action = actions[index % actions.length];
     const correct = `Study ${topic} by learning to ${action}.`;
