@@ -23,6 +23,12 @@
 .lesson-notes-empty h2 { margin:4px 0 8px; font-size:25px; }
 .lesson-notes-empty > p:last-child { max-width:480px; color:#718078; line-height:1.6; }
 .lesson-editor { display:grid; gap:18px; }
+.lesson-scheme-loader { display:flex; align-items:flex-end; justify-content:space-between; gap:22px; padding:21px 23px; border-left:4px solid #e6b325; }
+.lesson-scheme-loader h3 { margin:0 0 5px; color:#14271f; font-size:18px; }
+.lesson-scheme-loader p { margin:0; color:#718078; font-size:13px; }
+.lesson-scheme-loader > div:last-child { display:grid; grid-template-columns:190px 105px 80px auto; align-items:end; gap:10px; }
+.lesson-scheme-loader label { display:grid; gap:6px; color:#41564d; font-size:11px; font-weight:750; }
+.lesson-scheme-loader select { height:42px; padding:0 10px; border:1px solid #d5e0da; border-radius:9px; color:#14271f; background:#fff; font-size:13px; }
 .lesson-editor-toolbar { display:flex; align-items:center; justify-content:space-between; gap:22px; padding:23px 25px; border-radius:16px; color:#fff; background:#071f38; }
 .lesson-editor-toolbar h2 { margin:3px 0 5px; font-size:23px; }
 .lesson-editor-toolbar > div:first-child > span { color:#c8d8e5; font-size:13px; }
@@ -54,6 +60,9 @@
   .resource-grid { grid-template-columns:1fr; }
   .resource-grid > button { min-height:160px; padding:21px; }
   .lesson-editor-toolbar { align-items:flex-start; flex-direction:column; padding:20px; }
+  .lesson-scheme-loader { align-items:stretch; flex-direction:column; }
+  .lesson-scheme-loader > div:last-child { grid-template-columns:1fr 1fr; }
+  .lesson-scheme-loader > div:last-child label:first-child,.lesson-scheme-loader .primary { grid-column:1/-1; }
   .lesson-editor-toolbar > div:last-child { width:100%; flex-wrap:wrap; }
   .lesson-editor-toolbar > div:last-child button { flex:1; }
   .lesson-form-grid { grid-template-columns:1fr; }
