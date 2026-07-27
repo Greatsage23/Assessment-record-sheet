@@ -1,13 +1,22 @@
 type Level = "Basic 7" | "Basic 8" | "Basic 9";
 
 const sharedLanguage = ["Oral Language and Listening", "Reading Comprehension", "Grammar and Language Use", "Vocabulary Development", "Writing and Composition"];
-const literature = ["Literature — Prose", "Literature — Drama", "Literature — Poetry", "Literature — Oral Literature"];
+const beaconOfLightLiterature = [
+  "Literature — Prose: Beyond Light and Shadow", "Literature — Prose: Oliver Asks for More",
+  "Literature — Prose: The Family That Cared", "Literature — Prose: Forest Gold",
+  "Literature — Prose: A Calabash of Saha", "Literature — Prose: Kissiwaa the Heroine",
+  "Literature — Prose: Fly Like an Eagle", "Literature — Prose: A Medal from Grandpa",
+  "Literature — Prose: A Beacon of Light", "Literature — Drama: Dawuni's Dream",
+  "Literature — Drama: Spreading Light", "Literature — Drama: Mark Antony Mourns Caesar",
+  "Literature — Poetry: The Monday Breeze", "Literature — Poetry: Real Illusioned Beckley",
+  "Literature — Poetry: A Mystic Figure from Ghana", "Literature — Poetry: The Unseen Painter",
+];
 
 export const CURRICULUM_TOPICS: Record<string, Record<Level, string[]>> = {
   "English Language": {
-    "Basic 7": [...sharedLanguage, "Narrative and Descriptive Writing", "Library and Study Skills", ...literature],
-    "Basic 8": [...sharedLanguage, "Expository and Persuasive Writing", "Summary Writing", "Media Literacy", ...literature],
-    "Basic 9": [...sharedLanguage, "Argumentative and Functional Writing", "Summary and Note-Making", "Examination Language Skills", ...literature],
+    "Basic 7": [...sharedLanguage, "Narrative and Descriptive Writing", "Library and Study Skills", ...beaconOfLightLiterature],
+    "Basic 8": [...sharedLanguage, "Expository and Persuasive Writing", "Summary Writing", "Media Literacy", ...beaconOfLightLiterature],
+    "Basic 9": [...sharedLanguage, "Argumentative and Functional Writing", "Summary and Note-Making", "Examination Language Skills", ...beaconOfLightLiterature],
   },
   Mathematics: {
     "Basic 7": ["Place Value and Number Operations", "Fractions, Decimals and Percentages", "Ratio and Proportion", "Sets", "Algebraic Expressions", "Patterns and Relations", "Lines, Angles and Shapes", "Measurement", "Data Collection and Presentation", "Probability"],

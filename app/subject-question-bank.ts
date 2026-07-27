@@ -84,6 +84,31 @@ function writtenResponseBank(className: string, topic: string, type: "Short Answ
   }));
 }
 
+const proseStudyAreas = [
+  "main events and their logical sequence", "central conflict and its development", "setting and its influence on events", "the protagonist, with evidence for the choice", "the development of one major character", "a comparison of two characters", "a decision that changes the course of events", "an internal conflict and its effect", "an external conflict and its resolution", "the main theme, supported by two incidents", "a secondary theme and its development", "two moral lessons linked to events", "the significance of the title", "the narrative point of view and its effect", "the mood at the opening and how it is created", "the mood at the ending", "an instance of suspense and its effect", "an instance of irony and its effect", "a symbol or important object and what it represents", "how dialogue reveals character", "a striking image and the picture it creates", "a figure of speech and its contextual meaning", "the writer's use of contrast", "descriptive language in an important scene", "the role of a minor character", "the changing relationship between two characters", "the climax as the turning point", "the effectiveness of the ending", "a social issue and the writer's attitude to it", "the relevance of one problem to Ghanaian society", "a Ghanaian cultural value or practice", "a character's commendable action", "a character's poor decision and a better alternative", "a text-supported character sketch", "an incident retold from another character's viewpoint", "a justified prediction after the ending", "how another setting would change the story", "the importance of a passage selected by the teacher", "how character, conflict and setting communicate a lesson", "the story's relevance to JHS learners",
+];
+const dramaStudyAreas = [
+  "the action and central conflict", "the exposition and what it reveals", "how the opening prepares the audience", "setting and its contribution to the action", "the protagonist, supported with evidence", "the opposing force and its effect", "an important changing relationship", "a major character's motivation", "a comparison of two characters", "a text-supported character sketch", "the role of a minor character", "rising action and the creation of tension", "the climax as turning point", "the resolution of the main conflict", "the main theme, supported by two moments", "a secondary theme", "two lessons for the audience", "the significance of the title", "dramatic irony and its effect", "suspense and how it is created", "humour and its dramatic purpose", "how dialogue reveals character", "the meaning and importance of a speech selected by the teacher", "conflict expressed through dialogue", "the purpose of a stage direction", "gesture and movement suitable for one scene", "costume and props suitable for one scene", "sound or lighting that communicates mood", "a figure of speech in the dialogue", "repetition or contrast used for emphasis", "a social issue relevant to Ghana", "a cultural value presented or questioned", "a judgement of one character's action", "an alternative decision and its likely result", "an incident rewritten as narrative", "a diary entry after a major event", "a justified prediction after the final scene", "the effectiveness of the ending", "how character, dialogue and stagecraft develop a theme", "the play's relevance to JHS learners",
+];
+const poetryStudyAreas = [
+  "the subject matter in your own words", "the persona, supported with evidence", "the situation that gives rise to the poem", "the significance of the title", "the central theme, supported by two details", "a secondary theme", "two lessons for the reader", "the persona's attitude", "the dominant tone and how it is created", "the mood created in the reader", "a change in tone", "the poem's meaningful parts", "structure and its contribution to meaning", "line length and arrangement", "stanza arrangement and its effect", "the rhyme pattern and its effect", "rhythm and how it supports meaning", "repetition and its effect", "alliteration or consonance and its effect", "onomatopoeia, where present", "visual imagery and its effect", "sound imagery and its effect", "a metaphor and its contextual meaning", "a simile and its comparison", "personification and its effect", "a symbol and what it represents", "contrast and the idea it emphasises", "an important expression selected by the teacher", "a stanza paraphrased in clear prose", "the connection between opening and closing lines", "appeal to the senses", "word choice and atmosphere", "a social or moral issue", "the message's relevance to Ghana today", "a cultural value reflected in the poem", "the most effective image, with justification", "a comparison of two images or ideas", "whether the persona achieves the poem's purpose", "how two poetic devices communicate a theme", "a critical appreciation covering subject matter, theme, tone and style",
+];
+
+function beaconLiteratureBank(className: string, topic: string): CurriculumQuestion[] {
+  const genre = topic.includes("— Prose:") ? "prose" : topic.includes("— Drama:") ? "drama" : "poetry";
+  const title = topic.split(": ").slice(1).join(": ");
+  const areas = genre === "prose" ? proseStudyAreas : genre === "drama" ? dramaStudyAreas : poetryStudyAreas;
+  return areas.map((area, index) => ({
+    id: stableId(`English-${className}-Beacon-${title}-${index + 1}`), className, subject: "English Language", term: "All Terms", topic,
+    questionType: index < 30 ? "Short Answer" as const : "Essay" as const,
+    difficulty: index < 12 ? "Easy" as const : index < 30 ? "Moderate" as const : "Challenging" as const,
+    questionText: `With close reference to “${title}” in The Beacon of Light, discuss ${area}. Support your response with accurate evidence from the prescribed text.`,
+    options: [], marks: index < 12 ? 4 : index < 30 ? 6 : 10,
+    answer: index < 30 ? "Award marks for accurate knowledge, a relevant explanation and specific evidence from the prescribed text. Do not award unsupported general statements." : "Literature rubric: knowledge and relevance 4 marks; analysis with accurate textual evidence 3 marks; organisation 1 mark; expression and mechanical accuracy 2 marks.",
+    createdBy: "Built-in The Beacon of Light literature bank", createdAt: "", source: "Built-in" as const,
+  }));
+}
+
 export function buildSubjectQuestionBank(subject: string, className: string): CurriculumQuestion[] {
   const topics = curriculumTopicsFor(subject, className);
   const shortAnswerTopics = new Set(["Summary Writing", "Summary and Note-Making", "Media Literacy", "Library and Study Skills"]);
@@ -93,8 +118,9 @@ export function buildSubjectQuestionBank(subject: string, className: string): Cu
     ...(topics.includes("Expository and Persuasive Writing") ? expositoryPersuasiveBank(className) : []),
     ...topics.filter((topic) => shortAnswerTopics.has(topic)).flatMap((topic) => writtenResponseBank(className, topic, "Short Answer")),
     ...topics.filter((topic) => essayTopics.has(topic)).flatMap((topic) => writtenResponseBank(className, topic, "Essay")),
+    ...topics.filter((topic) => topic.startsWith("Literature —")).flatMap((topic) => beaconLiteratureBank(className, topic)),
   ] : [];
-  const responseTopics = new Set(["Reading Comprehension", "Expository and Persuasive Writing", ...shortAnswerTopics, ...essayTopics]);
+  const responseTopics = new Set(["Reading Comprehension", "Expository and Persuasive Writing", ...shortAnswerTopics, ...essayTopics, ...topics.filter((topic) => topic.startsWith("Literature —"))]);
   const standardTopics = topics.filter((topic) => !(subject === "English Language" && responseTopics.has(topic)));
   const standard = standardTopics.flatMap((topic, topicIndex) => Array.from({ length: 40 }, (_, index) => {
     const action = actions[index % actions.length];
