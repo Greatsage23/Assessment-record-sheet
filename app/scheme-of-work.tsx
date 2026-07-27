@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
+import { COMPUTING_SCHEMES_2026 } from "./computing-scheme-data";
 
 const SUBJECTS = [
   "English Language", "Mathematics", "Science", "Social Studies", "Computing",
@@ -41,6 +42,10 @@ function sizeLabel(bytes: number) {
   return bytes < 1024 * 1024 ? `${Math.ceil(bytes / 1024)} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
+function escapeWord(value: string) {
+  return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+}
+
 export default function SchemeOfWork({ administrator = false, adminPassword = "" }: { administrator?: boolean; adminPassword?: string }) {
   const [schemes, setSchemes] = useState<Scheme[]>([]);
   const [filters, setFilters] = useState<Filters>(defaultFilters);
@@ -50,8 +55,18 @@ export default function SchemeOfWork({ administrator = false, adminPassword = ""
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [builtInLevel, setBuiltInLevel] = useState("Basic 7");
   const fileRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
+
+  function downloadComputingScheme() {
+    const rows = COMPUTING_SCHEMES_2026[builtInLevel];
+    const body = rows.map((item) => `<tr><td>${escapeWord(item.week)}</td><td>${escapeWord(item.date)}</td><td>${escapeWord(item.strand)}</td><td>${escapeWord(item.subStrand)}</td><td>${escapeWord(item.resources)}</td></tr>`).join("");
+    const html = `<!doctype html><html><head><meta charset="utf-8"><style>@page{size:A4 landscape;margin:12mm}body{font-family:Arial,sans-serif;color:#14271f}h1{text-align:center;font-size:18pt;margin:0 0 4px}p{text-align:center;margin:0 0 14px;color:#52675d;font-size:10pt}table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:8.5pt}th{padding:7px;color:white;background:#087443;border:1px solid #064f35;text-align:left}td{padding:6px;border:1px solid #9fb3a9;vertical-align:top;line-height:1.25}tr:nth-child(even){background:#f2f8f5}th:nth-child(1){width:5%}th:nth-child(2){width:15%}th:nth-child(3){width:16%}th:nth-child(4){width:32%}th:nth-child(5){width:32%}</style></head><body><h1>1ST NOVEMBER 1954 J.H.S.</h1><p>COMPUTING SCHEME OF WORK · ${escapeWord(builtInLevel)} · FIRST TERM · 2026/2027</p><table><thead><tr><th>Week</th><th>Date</th><th>Strand</th><th>Sub-strand</th><th>Resources</th></tr></thead><tbody>${body}</tbody></table></body></html>`;
+    const url = URL.createObjectURL(new Blob(["\ufeff", html], { type: "application/msword" }));
+    const link = document.createElement("a"); link.href = url; link.download = `${builtInLevel}-Computing-Scheme-of-Work-Term-1-2026-2027.doc`.replaceAll(" ", "-"); link.click(); URL.revokeObjectURL(url);
+    setMessage(`${builtInLevel} Computing scheme downloaded in Word format.`);
+  }
 
   async function loadSchemes() {
     setLoading(true);
@@ -156,6 +171,11 @@ export default function SchemeOfWork({ administrator = false, adminPassword = ""
       <div><p>{administrator ? "Administrator library" : "Teacher resource library"}</p><h2>{administrator ? "Scheme of Work Management" : "View Scheme of Work"}</h2><span>{administrator ? "Upload, organise and maintain curriculum documents." : "Find, preview and download approved curriculum documents."}</span></div>
       <strong>{schemes.length}<small>matching document{schemes.length === 1 ? "" : "s"}</small></strong>
     </div>
+
+    <section className="built-in-scheme panel">
+      <div className="panel-head"><div><p className="scheme-kicker">NaCCA curriculum · 2026/2027</p><h2>First-Term Computing Scheme</h2><span>8 September–17 December 2026 · Includes public holidays, revision and examinations</span></div><div className="built-in-scheme-actions"><label>Level<select value={builtInLevel} onChange={(event) => setBuiltInLevel(event.target.value)}>{LEVELS.map((level) => <option key={level}>{level}</option>)}</select></label><button className="primary" onClick={downloadComputingScheme}>Download Word</button></div></div>
+      <div className="table-scroll"><table className="built-in-scheme-table"><thead><tr><th>Week</th><th>Date</th><th>Strand</th><th>Sub-strand</th><th>Resources</th></tr></thead><tbody>{COMPUTING_SCHEMES_2026[builtInLevel].map((item) => <tr key={item.week}><td>{item.week}</td><td>{item.date}</td><td><strong>{item.strand}</strong></td><td>{item.subStrand}</td><td>{item.resources}</td></tr>)}</tbody></table></div>
+    </section>
 
     {message && <div className="scheme-notice" role="status">{message}<button onClick={() => setMessage("")} aria-label="Dismiss message">×</button></div>}
 

@@ -1,0 +1,76 @@
+export type ComputingSchemeRow = { week: string; date: string; strand: string; subStrand: string; resources: string };
+
+const dates = [
+  "8–11 September 2026", "14–18 September 2026", "21–25 September 2026 (Founder’s Day: 21 September)",
+  "28 September–2 October 2026", "5–9 October 2026", "12–16 October 2026", "19–23 October 2026",
+  "26–30 October 2026", "2–6 November 2026", "9–13 November 2026", "16–20 November 2026",
+  "23–27 November 2026", "30 November–4 December 2026 (Farmer’s Day: 4 December)",
+  "7–11 December 2026", "14–17 December 2026",
+];
+
+const row = (week: number, strand: string, subStrand: string, resources: string): ComputingSchemeRow => ({ week: String(week), date: dates[week - 1], strand, subStrand, resources });
+const common = {
+  computer: "Computers or laptops, system-unit chart, projector, NaCCA-approved Computing textbook, labelled component samples and short demonstration video.",
+  safety: "Computer laboratory, workstation-safety chart, adjustable chair and desk, cleaning materials, cable ties, first-aid kit, projector and safety video.",
+  word: "Computers, projector, word-processing software, sample documents, keyboard chart, NaCCA-approved Computing textbook and practical task sheets.",
+  presentation: "Computers, projector, presentation software, sample slide decks, images, audio/video clips, textbook and practical task sheets.",
+  spreadsheet: "Computers, projector, spreadsheet software, prepared datasets, formula/function chart, textbook and practical task sheets.",
+  publishing: "Computers, projector, desktop-publishing software, sample flyers/newsletters, images, printer, paper and practical task sheets.",
+  technology: "Computers or tablets, projector, charts of community technologies, internet resources, videos, locally available digital devices and textbook.",
+  revision: "Computers, projector, revision worksheets, curriculum-based practical tasks, textbooks, charts, past class exercises and internet resources.",
+  exam: "Computers, examination question papers, answer booklets, practical files, printer, storage devices and marking scheme.",
+};
+
+export const COMPUTING_SCHEMES_2026: Record<string, ComputingSchemeRow[]> = {
+  "Basic 7": [
+    row(1, "Introduction to Computing", "Components of Computers and Computer Systems — fourth-generation computers and their characteristics.", common.computer),
+    row(2, "Introduction to Computing", "Components of Computers and Computer Systems — barcode readers, scanners and other input devices; graphing plotters and data projectors as output devices.", common.computer),
+    row(3, "Introduction to Computing", "Components of Computers and Computer Systems — external hard drives and other storage devices; introduction to the Windows environment and file management. Founder’s Day is observed on Monday.", common.computer),
+    row(4, "Introduction to Computing", "Technology in the Community — identify technology tools used in education, health, banking, agriculture and communication.", common.technology),
+    row(5, "Introduction to Computing", "Technology in the Community — benefits and negative effects of computers; environmentally responsible handling of electronic waste.", common.technology),
+    row(6, "Introduction to Computing", "Health and Safety in the Use of ICT Tools — health regulations, correct posture, safe workstation arrangement and responsible laboratory practice.", common.safety),
+    row(7, "Productivity Software", "Introduction to Word Processing — importance of word processors; create, open, save and close documents; insert, select, delete and move text.", common.word),
+    row(8, "Productivity Software", "Introduction to Word Processing — find and replace, undo and redo, spelling and grammar checks, proofreading and document correction.", common.word),
+    row(9, "Productivity Software", "Introduction to Word Processing — font and paragraph formatting, alignment, indentation, line spacing, tabs, bullets, numbering and borders.", common.word),
+    row(10, "Productivity Software", "Introduction to Presentation Software — importance of presentation software, interface features, slide creation and use of special characters.", common.presentation),
+    row(11, "Productivity Software", "Introduction to Presentation Software — text formatting, alignment, Slide Master, themes, design templates and delivery of a short presentation.", common.presentation),
+    row(12, "Productivity Software", "Introduction to Electronic Spreadsheet — spreadsheet interface, worksheets, rows, columns, cells, cell references and data types.", common.spreadsheet),
+    row(13, "Productivity Software", "Introduction to Electronic Spreadsheet — alignment, merge and wrap, page setup, headers/footers, AutoFill and simple formula creation. Farmer’s Day is observed on Friday.", common.spreadsheet),
+    row(14, "Revision", "Revision and practical consolidation — computer components, health and safety, word processing, presentations and spreadsheets.", common.revision),
+    row(15, "End-of-Term Examination", "Theory and practical end-of-term examinations; feedback and correction of common errors.", common.exam),
+  ],
+  "Basic 8": [
+    row(1, "Introduction to Computing", "Components of Computers and Computer Systems — fifth-generation computers and emerging intelligent systems.", common.computer),
+    row(2, "Introduction to Computing", "Components of Computers and Computer Systems — direct data-entry devices, Braille printers, flash-memory systems and their uses.", common.computer),
+    row(3, "Introduction to Computing", "Components of Computers and Computer Systems — Windows navigation, drive management and advanced file-management techniques. Founder’s Day is observed on Monday.", common.computer),
+    row(4, "Introduction to Computing", "Technology in the Community — technologies that improve computer accessibility and the effect of portable computing devices on everyday life.", common.technology),
+    row(5, "Introduction to Computing", "Technology in the Community — benefits, risks and responsible use of online services.", common.technology),
+    row(6, "Introduction to Computing", "Health and Safety in the Use of ICT Tools — workstation health issues, risk assessment and measures for reducing electrical, ergonomic and environmental hazards.", common.safety),
+    row(7, "Productivity Software", "Introduction to Word Processing — create and format tables; merge and split cells; apply formulas, borders and shading.", common.word),
+    row(8, "Productivity Software", "Introduction to Word Processing — page formatting, sections, columns, page breaks, headers, footers and printing options.", common.word),
+    row(9, "Productivity Software", "Introduction to Presentation — insert and edit pictures and screenshots; use drawing canvas, shapes and text in shapes.", common.presentation),
+    row(10, "Productivity Software", "Introduction to Presentation — arrange, align, group and layer objects to produce an effective slide presentation.", common.presentation),
+    row(11, "Productivity Software", "Introduction to Desktop Publishing — purpose and features of desktop-publishing software; create and save a publication from a blank page or template.", common.publishing),
+    row(12, "Productivity Software", "Introduction to Desktop Publishing — page orientation and margins; add and modify pictures and text in a flyer or newsletter.", common.publishing),
+    row(13, "Productivity Software", "Introduction to Electronic Spreadsheet — built-in functions, complex formulas, relative/absolute references and copying formulas. Farmer’s Day is observed on Friday.", common.spreadsheet),
+    row(14, "Revision", "Revision and practical consolidation — fifth-generation computing, online services, workstation safety, word processing, presentation, publishing and spreadsheet skills.", common.revision),
+    row(15, "End-of-Term Examination", "Theory and practical end-of-term examinations; feedback and correction of common errors.", common.exam),
+  ],
+  "Basic 9": [
+    row(1, "Introduction to Computing", "Components of Computers and Computer Systems — modern computer systems, perceptual computing and intelligent human–computer interaction.", common.computer),
+    row(2, "Introduction to Computing", "Components of Computers and Computer Systems — wearable displays, network storage and cloud-storage systems.", common.computer),
+    row(3, "Introduction to Computing", "Components of Computers and Computer Systems — operating-system utilities, device drivers and advanced file-management techniques. Founder’s Day is observed on Monday.", common.computer),
+    row(4, "Introduction to Computing", "Technology in the Community — evaluate a community problem that can be solved with technology.", common.technology),
+    row(5, "Introduction to Computing", "Technology in the Community — propose, design and present a feasible technological solution as a group project.", common.technology),
+    row(6, "Introduction to Computing", "Health and Safety in the Use of ICT Tools — evaluate workstation health issues and recommend safety-risk-reduction measures.", common.safety),
+    row(7, "Productivity Software", "Introduction to Word Processing — insert and edit pictures and screenshots; create and format SmartArt graphics.", common.word),
+    row(8, "Productivity Software", "Introduction to Word Processing — insert and manage audio, video, hyperlinks and other multimedia in a document.", common.word),
+    row(9, "Productivity Software", "Introduction to Presentation — insert pictures and screenshots; apply suitable transitions and animation effects.", common.presentation),
+    row(10, "Productivity Software", "Introduction to Presentation — add and control audio/video, rehearse timings and deliver an audience-appropriate presentation.", common.presentation),
+    row(11, "Productivity Software", "Introduction to Desktop Publishing — create and present a flyer, brochure, card or newsletter for a defined audience and purpose.", common.publishing),
+    row(12, "Productivity Software", "Introduction to Desktop Publishing — describe and evaluate a publication using layout, typography, colour, accuracy and audience criteria.", common.publishing),
+    row(13, "Productivity Software", "Introduction to Electronic Spreadsheet — data filtering, sorting and validation; apply styles, themes and templates. Farmer’s Day is observed on Friday.", common.spreadsheet),
+    row(14, "Revision", "Revision and practical consolidation — perceptual computing, community problem-solving, safety, multimedia documents, presentations, publishing and spreadsheet data tools.", common.revision),
+    row(15, "End-of-Term Examination", "Theory and practical end-of-term examinations; feedback and correction of common errors.", common.exam),
+  ],
+};
