@@ -1,6 +1,6 @@
 export type ComputingSchemeRow = { week: string; date: string; strand: string; subStrand: string; resources: string };
 
-const dates = [
+export const TERM_DATES_2026 = [
   "8–11 September 2026", "14–18 September 2026", "21–25 September 2026 (Founder’s Day: 21 September)",
   "28 September–2 October 2026", "5–9 October 2026", "12–16 October 2026", "19–23 October 2026",
   "26–30 October 2026", "2–6 November 2026", "9–13 November 2026", "16–20 November 2026",
@@ -8,7 +8,7 @@ const dates = [
   "7–11 December 2026", "14–17 December 2026",
 ];
 
-const row = (week: number, strand: string, subStrand: string, resources: string): ComputingSchemeRow => ({ week: String(week), date: dates[week - 1], strand, subStrand, resources });
+const row = (week: number, strand: string, subStrand: string, resources: string): ComputingSchemeRow => ({ week: String(week), date: TERM_DATES_2026[week - 1], strand, subStrand, resources });
 const common = {
   computer: "Computers or laptops, system-unit chart, projector, NaCCA-approved Computing textbook, labelled component samples and short demonstration video.",
   safety: "Computer laboratory, workstation-safety chart, adjustable chair and desk, cleaning materials, cable ties, first-aid kit, projector and safety video.",
