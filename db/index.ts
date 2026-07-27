@@ -113,6 +113,23 @@ async function initializeDatabase() {
   )`;
   await sql`CREATE INDEX IF NOT EXISTS question_bank_scope_idx
     ON question_bank (class_name, subject, term)`;
+  await sql`CREATE TABLE IF NOT EXISTS lesson_note_submissions (
+    id SERIAL PRIMARY KEY,
+    teacher_name TEXT NOT NULL,
+    subject TEXT NOT NULL,
+    class_name TEXT NOT NULL,
+    week TEXT NOT NULL,
+    strand TEXT DEFAULT '' NOT NULL,
+    sub_strand TEXT DEFAULT '' NOT NULL,
+    note_data TEXT NOT NULL,
+    status TEXT DEFAULT 'Pending' NOT NULL,
+    headteacher_comment TEXT DEFAULT '' NOT NULL,
+    reviewed_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
+  )`;
+  await sql`CREATE INDEX IF NOT EXISTS lesson_notes_review_idx
+    ON lesson_note_submissions (status, created_at)`;
   await sql`CREATE TABLE IF NOT EXISTS schemes_of_work (
     id SERIAL PRIMARY KEY,
     title TEXT NOT NULL,

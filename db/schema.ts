@@ -80,3 +80,18 @@ export const questionBank = pgTable("question_bank", {
   createdBy: text("created_by").notNull().default("Subject teacher"),
   ...timestamps(),
 });
+
+export const lessonNoteSubmissions = pgTable("lesson_note_submissions", {
+  id: serial("id").primaryKey(),
+  teacherName: text("teacher_name").notNull(),
+  subject: text("subject").notNull(),
+  className: text("class_name").notNull(),
+  week: text("week").notNull(),
+  strand: text("strand").notNull().default(""),
+  subStrand: text("sub_strand").notNull().default(""),
+  noteData: text("note_data").notNull(),
+  status: text("status").notNull().default("Pending"),
+  headteacherComment: text("headteacher_comment").notNull().default(""),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true, mode: "string" }),
+  ...timestamps(),
+});

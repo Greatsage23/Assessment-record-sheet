@@ -52,9 +52,61 @@
 .lesson-day-head strong { color:#071f38; font-size:14px; }
 .lesson-day-head button { border:0; color:#b42318; background:transparent; font-size:12px; font-weight:750; }
 .lesson-day-list .lesson-main-text { min-height:170px; }
+.dashboard-role-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin:-4px 0 18px; }
+.dashboard-role-actions > button { display:flex; align-items:center; gap:13px; padding:17px 19px; border:1px solid #dce5e0; border-radius:13px; color:#14271f; background:#fff; text-align:left; box-shadow:0 6px 18px rgba(7,31,56,.04); }
+.dashboard-role-actions > button:hover { border-color:#8bb9a3; transform:translateY(-1px); }
+.dashboard-role-actions > button > span { width:44px; height:44px; display:grid; place-items:center; flex:0 0 auto; border-radius:11px; color:#087443; background:#e6f4ed; }
+.dashboard-role-actions > button:nth-child(2) > span { color:#8b6710; background:#faf1d7; }
+.dashboard-role-actions div { display:grid; gap:3px; }
+.dashboard-role-actions strong { font-size:15px; }
+.dashboard-role-actions small { color:#718078; font-size:12px; }
+.teacher-workspace { display:grid; gap:18px; }
+.teacher-workspace-hero { display:flex; align-items:flex-start; gap:19px; padding:28px; border-radius:16px; color:#fff; background:#071f38; }
+.teacher-workspace-hero > span { width:60px; height:60px; display:grid; place-items:center; flex:0 0 auto; border-radius:15px; color:#fff; background:#087443; }
+.teacher-workspace-hero h2 { margin:4px 0 7px; font-size:25px; }
+.teacher-workspace-hero p:not(.eyebrow) { max-width:680px; margin:0 0 18px; color:#c8d8e5; line-height:1.55; }
+.teacher-workspace-hero .eyebrow { color:#e6b325; }
+.teacher-workspace-hero .primary { width:max-content; }
+.teacher-workflow { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.teacher-workflow article { display:flex; align-items:center; gap:13px; padding:20px; border:1px solid #dce5e0; border-radius:14px; background:#fff; }
+.teacher-workflow b { width:34px; height:34px; display:grid; place-items:center; flex:0 0 auto; border-radius:50%; color:#fff; background:#087443; }
+.teacher-workflow span { display:grid; gap:3px; }
+.teacher-workflow small { color:#718078; line-height:1.4; }
+.headteacher-lock { min-height:390px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+.headteacher-lock-icon { font-size:38px; margin-bottom:10px; }
+.headteacher-lock h2 { margin:5px 0 7px; font-size:25px; }
+.headteacher-lock > p:not(.eyebrow) { max-width:470px; margin:0 0 19px; color:#718078; }
+.headteacher-lock form { width:min(390px,100%); display:grid; gap:11px; text-align:left; }
+.headteacher-lock label { display:grid; gap:7px; color:#41564d; font-size:12px; font-weight:750; }
+.headteacher-lock input { height:44px; padding:0 12px; border:1px solid #d5e0da; border-radius:9px; }
+.headteacher-review { display:grid; gap:17px; }
+.headteacher-banner { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:24px 26px; border-radius:16px; color:#fff; background:#071f38; }
+.headteacher-banner p { margin:0 0 3px; color:#e6b325; font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+.headteacher-banner h2 { margin:0 0 5px; font-size:23px; }
+.headteacher-banner span { color:#c8d8e5; font-size:13px; }
+.headteacher-banner .secondary { color:#fff; border-color:#557087; background:transparent; }
+.review-message { padding:11px 14px; border:1px solid #b9dec9; border-radius:10px; color:#075435; background:#edf8f2; font-size:13px; }
+.review-summary { display:grid; grid-template-columns:repeat(3,1fr); gap:13px; }
+.review-summary article { display:grid; gap:3px; padding:18px; border:1px solid #dce5e0; border-radius:13px; background:#fff; }
+.review-summary strong { color:#071f38; font-size:26px; }
+.review-summary span { color:#718078; font-size:12px; }
+.review-list { display:grid; gap:14px; }
+.review-empty { padding:50px 20px; border:1px dashed #cbd9d2; border-radius:14px; color:#718078; background:#fff; text-align:center; }
+.review-card { display:grid; gap:15px; padding:20px; border:1px solid #dce5e0; border-left:4px solid #e6b325; border-radius:14px; background:#fff; }
+.review-card.status-approved { border-left-color:#087443; }.review-card.status-returned { border-left-color:#b42318; }
+.review-card-head { display:flex; align-items:flex-start; justify-content:space-between; gap:15px; }
+.review-card-head h3 { margin:7px 0 3px; font-size:17px; }.review-card-head p { margin:0; color:#718078; font-size:12px; }
+.review-status { padding:4px 8px; border-radius:999px; color:#76570b; background:#faf1d7; font-size:10px; font-weight:800; text-transform:uppercase; }
+.status-approved .review-status { color:#075435; background:#e6f4ed; }.status-returned .review-status { color:#8f1d15; background:#fdeceb; }
+.review-curriculum { display:grid; grid-template-columns:1fr 2fr; gap:10px; }
+.review-curriculum span { display:grid; gap:4px; padding:11px; border-radius:9px; color:#41564d; background:#f5f8f6; font-size:12px; }.review-curriculum b { color:#071f38; }
+.review-detail { display:grid; gap:10px; max-height:520px; overflow:auto; padding:15px; border:1px solid #dce5e0; border-radius:10px; color:#33483f; background:#fbfcfb; white-space:pre-wrap; }
+.review-detail p { margin:0; line-height:1.55; font-size:12px; }.review-detail h4 { margin:8px 0 2px; color:#071f38; }
+.review-card > label { display:grid; gap:7px; color:#41564d; font-size:12px; font-weight:750; }.review-card textarea { min-height:80px; padding:10px 12px; border:1px solid #d5e0da; border-radius:9px; resize:vertical; }
+.review-actions { display:flex; justify-content:flex-end; gap:9px; }.review-actions button { padding:10px 14px; border-radius:9px; font-weight:750; }.return-note { border:1px solid #e8a7a2; color:#a1261d; background:#fff; }.approve-note { border:1px solid #087443; color:#fff; background:#087443; }
 
 @media (max-width:760px) {
-  .sidebar nav { grid-template-columns:repeat(7,1fr); }
+  .sidebar nav { grid-template-columns:repeat(9,1fr); }
   .resource-hero { align-items:flex-start; padding:21px; }
   .resource-hero h2 { font-size:21px; }
   .resource-grid { grid-template-columns:1fr; }
@@ -69,6 +121,10 @@
   .lesson-wide { grid-column:auto; }
   .lesson-day-list article { grid-template-columns:1fr; }
   .lesson-day-head { grid-column:auto; }
+  .dashboard-role-actions,.teacher-workflow,.review-summary,.review-curriculum { grid-template-columns:1fr; }
+  .teacher-workspace-hero,.headteacher-banner,.review-card-head { align-items:flex-start; flex-direction:column; }
+  .review-actions { flex-direction:column; }
+  .review-actions button { width:100%; }
 }
 
 @media (min-width:761px) and (max-width:1180px) {

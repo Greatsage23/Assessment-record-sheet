@@ -58,6 +58,7 @@ function escapeWord(value: string) {
 export default function LessonNotes() {
   const [note, setNote] = useState<LessonNote>(initialNote);
   const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     try {
@@ -121,10 +122,24 @@ export default function LessonNotes() {
     setMessage("Lesson note exported in Microsoft Word format.");
   }
 
+  async function submitForReview() {
+    if (!note.teacherName.trim()) { setMessage("Enter the teacher's name before submitting."); return; }
+    if (!note.contentStandard.trim() || !note.indicators.trim()) { setMessage("Enter and verify the official content standard and indicator codes before submitting."); return; }
+    setSubmitting(true);
+    try {
+      const response = await fetch("/api/lesson-notes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ teacherName: note.teacherName, subject: note.subject, className: note.className, week: note.week, strand: note.strand, subStrand: note.subStrand, noteData: note }) });
+      const data = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(data.error || "Unable to submit the lesson note.");
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(note));
+      setMessage("Lesson note submitted to the headteacher for vetting and approval.");
+    } catch (error) { setMessage(error instanceof Error ? error.message : "Unable to submit the lesson note."); }
+    finally { setSubmitting(false); }
+  }
+
   return <section className="lesson-editor">
     <div className="lesson-editor-toolbar">
       <div><p className="eyebrow">Editable teaching document</p><h2>Weekly Computing Lesson Note</h2><span>Complete the NaCCA curriculum details and lesson activities, then export the formal lesson note.</span></div>
-      <div><button className="secondary" onClick={newDraft}>New note</button><button className="secondary" onClick={saveDraft}>Save draft</button><button className="primary" onClick={exportWord}>Export to Word</button></div>
+      <div><button className="secondary" onClick={newDraft}>New note</button><button className="secondary" onClick={saveDraft}>Save draft</button><button className="secondary" onClick={exportWord}>Export to Word</button><button className="primary" onClick={() => void submitForReview()} disabled={submitting}>{submitting ? "Submitting…" : "Submit to Headteacher"}</button></div>
     </div>
     {message && <div className="scheme-notice" role="status">{message}<button onClick={() => setMessage("")} aria-label="Dismiss message">×</button></div>}
 

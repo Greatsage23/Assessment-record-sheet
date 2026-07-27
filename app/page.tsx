@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import SchemeOfWork from "./scheme-of-work";
 import QuestionBank from "./question-bank";
 import LessonNotes from "./lesson-notes";
+import HeadteacherDashboard from "./headteacher-dashboard";
 import "./resources.css";
 
 type Student = {
@@ -19,7 +20,7 @@ type Student = {
 };
 type RosterStudent = { id: number; studentCode: string; name: string; className: string };
 
-type View = "dashboard" | "scorebook" | "administrator" | "resources" | "schemes" | "lessonNotes" | "questions" | "reports" | "overall" | "settings";
+type View = "dashboard" | "scorebook" | "administrator" | "teacher" | "headteacher" | "resources" | "schemes" | "lessonNotes" | "questions" | "reports" | "overall" | "settings";
 type AdminSection = "students" | "teachers" | "passwords" | "schemes";
 type ReportDetails = {
   academicYear: string;
@@ -58,6 +59,8 @@ const navItems: { id: View; label: string; icon: string }[] = [
   { id: "dashboard", label: "Dashboard", icon: "grid" },
   { id: "scorebook", label: "Scorebook", icon: "book" },
   { id: "administrator", label: "Administrator", icon: "settings" },
+  { id: "teacher", label: "Teacher", icon: "users" },
+  { id: "headteacher", label: "Headteacher", icon: "headteacher" },
   { id: "resources", label: "Resources", icon: "folder" },
   { id: "reports", label: "Reports", icon: "chart" },
   { id: "overall", label: "Overall Performance", icon: "chart" },
@@ -71,6 +74,7 @@ function Icon({ name, size = 22 }: { name: string; size?: number }) {
     folder: <><path d="M3 5h6l2 2h10v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 9h18"/></>,
     file: <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h6"/></>,
     users: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></>,
+    headteacher: <><circle cx="12" cy="7" r="4"/><path d="M5 21v-2a7 7 0 0 1 14 0v2M9 14l3 3 3-3"/></>,
     chart: <><path d="M3 3v18h18"/><path d="M7 16v-5M12 16V7M17 16V4"/></>,
     settings: <><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06-2.83 2.83-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21h-4v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06-2.83-2.83.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3v-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06L7.04 4.3l.06.06A1.65 1.65 0 0 0 8.92 4a1.65 1.65 0 0 0 1-1.51V2h4v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06 2.83 2.83-.06.06A1.65 1.65 0 0 0 19.4 9c.12.6.65 1.03 1.26 1.03H21v4h-.34c-.61 0-1.14.43-1.26 1z"/></>,
     search: <><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></>,
@@ -589,7 +593,7 @@ export default function Home() {
     }
   }
 
-  const pageTitle = ({ dashboard: "Assessment Overview", scorebook: "Assessment Record", administrator: "Administrator", resources: "Teaching Resources", schemes: "Scheme of Work", lessonNotes: "Lesson Notes", questions: "Questions", reports: "Performance Report", overall: "Combined Grade Performance", settings: "Assessment Settings" } as Record<View, string>)[view];
+  const pageTitle = ({ dashboard: "Assessment Overview", scorebook: "Assessment Record", administrator: "Administrator", teacher: "Teacher Dashboard", headteacher: "Headteacher Dashboard", resources: "Teaching Resources", schemes: "Scheme of Work", lessonNotes: "Lesson Notes", questions: "Questions", reports: "Performance Report", overall: "Combined Grade Performance", settings: "Assessment Settings" } as Record<View, string>)[view];
 
   return (
     <main className="app-shell">
@@ -617,13 +621,13 @@ export default function Home() {
 
         <div className="page-intro"><p className="eyebrow">Academic workspace</p><h1>{pageTitle}</h1>{view === "dashboard" && <p>Manage student records, scores and academic performance.</p>}</div>
 
-        {view !== "resources" && view !== "schemes" && view !== "lessonNotes" && view !== "questions" && <div className="filter-panel"><div className="filter-panel-heading"><span>Current assessment</span><small>Choose the class, subject and term to update this workspace.</small></div><div className="filters">
+        {view !== "teacher" && view !== "headteacher" && view !== "resources" && view !== "schemes" && view !== "lessonNotes" && view !== "questions" && <div className="filter-panel"><div className="filter-panel-heading"><span>Current assessment</span><small>Choose the class, subject and term to update this workspace.</small></div><div className="filters">
           <label><span>Class</span><select value={filter.className} onChange={(e) => setFilter({ ...filter, className: e.target.value })}>{SCHOOL_CLASSES.map((className) => <option key={className}>{className}</option>)}</select></label>
           <label><span>Subject</span><select value={filter.subject} onChange={(e) => setFilter({ ...filter, subject: e.target.value })}>{JHS_SUBJECTS.map((subject) => <option key={subject}>{subject}</option>)}</select></label>
           <label><span>Term</span><select value={filter.term} onChange={(e) => setFilter({ ...filter, term: e.target.value })}><option>Term 1</option><option>Term 2</option><option>Term 3</option></select></label>
           {view === "overall" ? <button className="primary" onClick={() => void loadOverallPerformance()}><Icon name="chart" size={19}/>Refresh combined results</button> : view === "administrator" ? <span className="admin-filter-badge">🔒 Administrator controls</span> : <button className="primary" onClick={() => void openScoreEntry()} disabled={scoreEntryPending}><Icon name="edit" size={19}/>{scoreEntryPending ? "Checking access…" : "Enter scores"}</button>}
         </div></div>}
-        {view !== "resources" && view !== "schemes" && view !== "lessonNotes" && view !== "questions" && <div className="selected-teacher"><span>Subject teacher</span><strong>{selectedTeacher || "Not assigned"}</strong><small>{filter.subject} · {filter.className}</small></div>}
+        {view !== "teacher" && view !== "headteacher" && view !== "resources" && view !== "schemes" && view !== "lessonNotes" && view !== "questions" && <div className="selected-teacher"><span>Subject teacher</span><strong>{selectedTeacher || "Not assigned"}</strong><small>{filter.subject} · {filter.className}</small></div>}
 
         {message && <div className="toast" role="status">{message}<button onClick={() => setMessage("")} aria-label="Dismiss"><Icon name="close" size={16}/></button></div>}
 
@@ -635,6 +639,7 @@ export default function Home() {
             <article><span className="metric-icon teal"><Icon name="trophy" size={25}/></span><div><small>Highest score</small><strong>{hasPerformance ? `${highest}%` : "—"}</strong><span>Current selection</span><em>{hasPerformance ? "Recorded performance" : "No scores yet"}</em></div></article>
           </section>
           {view === "dashboard" && <button className="scheme-dashboard-cta" onClick={() => setView("resources")}><Icon name="folder" size={22}/><span><strong>Resources</strong><small>Open schemes of work and lesson notes for classroom planning.</small></span></button>}
+          {view === "dashboard" && <div className="dashboard-role-actions"><button onClick={() => setView("teacher")}><span><Icon name="users" size={23}/></span><div><strong>Teacher</strong><small>Prepare, edit and submit lesson notes.</small></div></button><button onClick={() => setView("headteacher")}><span><Icon name="headteacher" size={23}/></span><div><strong>Headteacher</strong><small>Vet and approve submitted lesson notes.</small></div></button></div>}
           <ScoreTable students={visible} loading={loading} onManageStudents={() => { setView("administrator"); setAdminSection("students"); }} />
           {view === "dashboard" && <section className="academic-analytics" aria-label="Academic performance analytics">
             <article className="analytics-card performance-trend-card"><div className="analytics-head"><div><span className="analytics-icon"><Icon name="chart" size={20}/></span><div><h2>Academic Performance Trend</h2><p>Class average by term</p></div></div><div className="analytics-controls"><select aria-label="Chart type" defaultValue="Line chart"><option>Line chart</option></select><button aria-label="More chart options">•••</button></div></div><PerformanceTrend values={termAverages}/></article>
@@ -657,6 +662,8 @@ export default function Home() {
         {view === "schemes" && <><button className="resource-back" onClick={() => setView("resources")}>← Back to Resources</button><SchemeOfWork /></>}
         {view === "lessonNotes" && <><button className="resource-back" onClick={() => setView("resources")}>← Back to Resources</button><LessonNotes /></>}
         {view === "questions" && <><button className="resource-back" onClick={() => setView("resources")}>← Back to Resources</button><QuestionBank /></>}
+        {view === "teacher" && <section className="teacher-workspace"><div className="teacher-workspace-hero"><span><Icon name="users" size={30}/></span><div><p className="eyebrow">Teacher workspace</p><h2>Prepare and submit weekly lesson notes</h2><p>Open Lesson Notes under Resources, load the correct subject, class and week, edit the content and submit it to the headteacher.</p><button className="primary" onClick={() => setView("lessonNotes")}><Icon name="file" size={18}/>Open Lesson Notes</button></div></div><div className="teacher-workflow"><article><b>1</b><span><strong>Prepare</strong><small>Load the weekly note from the Scheme of Work.</small></span></article><article><b>2</b><span><strong>Edit</strong><small>Verify curriculum codes and refine every lesson phase.</small></span></article><article><b>3</b><span><strong>Submit</strong><small>Send the completed note to the headteacher for vetting.</small></span></article></div></section>}
+        {view === "headteacher" && <HeadteacherDashboard />}
 
         {view === "administrator" && !adminUnlocked && <section className="admin-lock panel">
           <span className="admin-lock-icon">🔐</span><p className="eyebrow">Restricted area</p><h2>Administrator access required</h2>
