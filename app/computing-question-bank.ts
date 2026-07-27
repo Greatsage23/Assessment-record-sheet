@@ -100,7 +100,7 @@ function difficulty(index: number): BuiltInQuestion["difficulty"] {
 
 function objectiveQuestions(className: string, pack: TopicPack): BuiltInQuestion[] {
   const level = levelFromClass(className);
-  return Array.from({ length: 50 }, (_, index) => {
+  return Array.from({ length: 40 }, (_, index) => {
     const concept = pack.concepts[index % pack.concepts.length];
     const other = pack.concepts.filter((item) => item.term !== concept.term);
     const number = index + 1;

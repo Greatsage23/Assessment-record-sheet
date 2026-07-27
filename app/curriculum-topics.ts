@@ -1,12 +1,13 @@
 type Level = "Basic 7" | "Basic 8" | "Basic 9";
 
-const sharedLanguage = ["Oral Language and Listening", "Reading Comprehension", "Grammar and Language Use", "Vocabulary Development", "Writing and Composition", "Literature"];
+const sharedLanguage = ["Oral Language and Listening", "Reading Comprehension", "Grammar and Language Use", "Vocabulary Development", "Writing and Composition"];
+const literature = ["Literature — Prose", "Literature — Drama", "Literature — Poetry", "Literature — Oral Literature"];
 
 export const CURRICULUM_TOPICS: Record<string, Record<Level, string[]>> = {
   "English Language": {
-    "Basic 7": [...sharedLanguage, "Narrative and Descriptive Writing", "Poetry, Prose and Drama", "Library and Study Skills"],
-    "Basic 8": [...sharedLanguage, "Expository and Persuasive Writing", "Summary Writing", "Poetry, Prose and Drama", "Media Literacy"],
-    "Basic 9": [...sharedLanguage, "Argumentative and Functional Writing", "Summary and Note-Making", "Poetry, Prose and Drama", "Examination Language Skills"],
+    "Basic 7": [...sharedLanguage, "Narrative and Descriptive Writing", "Library and Study Skills", ...literature],
+    "Basic 8": [...sharedLanguage, "Expository and Persuasive Writing", "Summary Writing", "Media Literacy", ...literature],
+    "Basic 9": [...sharedLanguage, "Argumentative and Functional Writing", "Summary and Note-Making", "Examination Language Skills", ...literature],
   },
   Mathematics: {
     "Basic 7": ["Place Value and Number Operations", "Fractions, Decimals and Percentages", "Ratio and Proportion", "Sets", "Algebraic Expressions", "Patterns and Relations", "Lines, Angles and Shapes", "Measurement", "Data Collection and Presentation", "Probability"],
