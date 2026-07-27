@@ -627,13 +627,13 @@ export default function Home() {
 
         <div className="page-intro"><p className="eyebrow">Academic workspace</p><h1>{pageTitle}</h1>{view === "dashboard" && <p>Manage student records, scores and academic performance.</p>}</div>
 
-        {view !== "teacher" && view !== "headteacher" && view !== "resources" && view !== "schemes" && view !== "lessonNotes" && view !== "questions" && <div className="filter-panel"><div className="filter-panel-heading"><span>Current assessment</span><small>Choose the class, subject and term to update this workspace.</small></div><div className="filters">
+        {view !== "dashboard" && view !== "teacher" && view !== "headteacher" && view !== "resources" && view !== "schemes" && view !== "lessonNotes" && view !== "questions" && <div className="filter-panel"><div className="filter-panel-heading"><span>Current assessment</span><small>Choose the class, subject and term to update this workspace.</small></div><div className="filters">
           <label><span>Class</span><select value={filter.className} onChange={(e) => setFilter({ ...filter, className: e.target.value })}>{SCHOOL_CLASSES.map((className) => <option key={className}>{className}</option>)}</select></label>
           <label><span>Subject</span><select value={filter.subject} onChange={(e) => setFilter({ ...filter, subject: e.target.value })}>{JHS_SUBJECTS.map((subject) => <option key={subject}>{subject}</option>)}</select></label>
           <label><span>Term</span><select value={filter.term} onChange={(e) => setFilter({ ...filter, term: e.target.value })}><option>Term 1</option><option>Term 2</option><option>Term 3</option></select></label>
           {view === "overall" ? <button className="primary" onClick={() => void loadOverallPerformance()}><Icon name="chart" size={19}/>Refresh combined results</button> : view === "administrator" ? <span className="admin-filter-badge">🔒 Administrator controls</span> : <button className="primary" onClick={() => void openScoreEntry()} disabled={scoreEntryPending}><Icon name="edit" size={19}/>{scoreEntryPending ? "Checking access…" : "Enter scores"}</button>}
         </div></div>}
-        {view !== "teacher" && view !== "headteacher" && view !== "resources" && view !== "schemes" && view !== "lessonNotes" && view !== "questions" && <div className="selected-teacher"><span>Subject teacher</span><strong>{selectedTeacher || "Not assigned"}</strong><small>{filter.subject} · {filter.className}</small></div>}
+        {view !== "dashboard" && view !== "teacher" && view !== "headteacher" && view !== "resources" && view !== "schemes" && view !== "lessonNotes" && view !== "questions" && <div className="selected-teacher"><span>Subject teacher</span><strong>{selectedTeacher || "Not assigned"}</strong><small>{filter.subject} · {filter.className}</small></div>}
 
         {message && <div className="toast" role="status">{message}<button onClick={() => setMessage("")} aria-label="Dismiss"><Icon name="close" size={16}/></button></div>}
 
