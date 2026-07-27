@@ -14,6 +14,7 @@
 .resource-card-icon { width:52px; height:52px; display:grid; place-items:center; flex:0 0 auto; border-radius:13px; }
 .resource-card-icon.green { color:#087443; background:#e6f4ed; }
 .resource-card-icon.navy { color:#071f38; background:#e8eef4; }
+.resource-card-icon.gold { color:#8b6710; background:#faf1d7; }
 .resource-back { width:max-content; margin:0 0 14px; padding:9px 13px; border:1px solid #dce5e0; border-radius:9px; color:#35564a; background:#fff; font-size:13px; font-weight:700; }
 .resource-back:hover { color:#087443; border-color:#8bb9a3; }
 .lesson-notes-empty { min-height:350px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
@@ -23,6 +24,7 @@
 .lesson-notes-empty > p:last-child { max-width:480px; color:#718078; line-height:1.6; }
 
 @media (max-width:760px) {
+  .sidebar nav { grid-template-columns:repeat(7,1fr); }
   .resource-hero { align-items:flex-start; padding:21px; }
   .resource-hero h2 { font-size:21px; }
   .resource-grid { grid-template-columns:1fr; }

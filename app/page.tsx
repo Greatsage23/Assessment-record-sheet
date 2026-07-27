@@ -58,7 +58,6 @@ const navItems: { id: View; label: string; icon: string }[] = [
   { id: "scorebook", label: "Scorebook", icon: "book" },
   { id: "administrator", label: "Administrator", icon: "settings" },
   { id: "resources", label: "Resources", icon: "folder" },
-  { id: "questions", label: "Questions", icon: "question" },
   { id: "reports", label: "Reports", icon: "chart" },
   { id: "overall", label: "Overall Performance", icon: "chart" },
   { id: "settings", label: "Settings", icon: "settings" },
@@ -651,11 +650,12 @@ export default function Home() {
           <div className="resource-grid">
             <button onClick={() => setView("schemes")}><span className="resource-card-icon green"><Icon name="book" size={27}/></span><span><strong>Scheme of Work</strong><small>Browse first-term schemes and download approved curriculum documents.</small><em>Open Scheme of Work →</em></span></button>
             <button onClick={() => setView("lessonNotes")}><span className="resource-card-icon navy"><Icon name="file" size={27}/></span><span><strong>Lesson Notes</strong><small>Access lesson-note resources organised for classroom teaching.</small><em>Open Lesson Notes →</em></span></button>
+            <button onClick={() => setView("questions")}><span className="resource-card-icon gold"><Icon name="question" size={27}/></span><span><strong>Questions</strong><small>Build examination questions by subject, class and selected curriculum topics.</small><em>Open Question Bank →</em></span></button>
           </div>
         </section>}
         {view === "schemes" && <><button className="resource-back" onClick={() => setView("resources")}>← Back to Resources</button><SchemeOfWork /></>}
         {view === "lessonNotes" && <section className="lesson-notes-empty panel"><button className="resource-back" onClick={() => setView("resources")}>← Back to Resources</button><span className="lesson-notes-icon"><Icon name="file" size={32}/></span><p className="eyebrow">Teaching resources</p><h2>Lesson Notes</h2><p>No lesson notes have been added yet. This section is ready for lesson-note resources.</p></section>}
-        {view === "questions" && <QuestionBank />}
+        {view === "questions" && <><button className="resource-back" onClick={() => setView("resources")}>← Back to Resources</button><QuestionBank /></>}
 
         {view === "administrator" && !adminUnlocked && <section className="admin-lock panel">
           <span className="admin-lock-icon">🔐</span><p className="eyebrow">Restricted area</p><h2>Administrator access required</h2>
