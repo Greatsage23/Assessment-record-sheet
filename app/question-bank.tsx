@@ -17,6 +17,17 @@ const emptyQuestion = { topic: "", literatureBook: "", literatureAuthor: "", que
 const escapeHtml = (value: string) => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("\n", "<br>");
 const shuffle = <T,>(items: T[]) => [...items].sort(() => Math.random() - 0.5);
 const dataUrl = (blob: Blob) => new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = reject; reader.readAsDataURL(blob); });
+const boundedImageDataUrl = (source: string, maximumWidth: number, maximumHeight: number) => new Promise<string>((resolve, reject) => {
+  const image = new Image();
+  image.onload = () => {
+    const scale = Math.min(maximumWidth / image.naturalWidth, maximumHeight / image.naturalHeight, 1);
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(image.naturalWidth * scale)); canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+    const context = canvas.getContext("2d"); if (!context) return reject(new Error("The logo could not be prepared."));
+    context.drawImage(image, 0, 0, canvas.width, canvas.height); resolve(canvas.toDataURL("image/png"));
+  };
+  image.onerror = reject; image.src = source;
+});
 const matchesType = (question: Question, type: PaperType) => type === "Essay" ? ["Essay", "Theory"].includes(question.questionType) : question.questionType === type;
 const englishShortAnswerTopics = new Set(["Reading Comprehension", "Summary Writing", "Summary and Note-Making", "Media Literacy", "Library and Study Skills"]);
 const englishEssayTopics = new Set(["Writing and Composition", "Narrative and Descriptive Writing", "Expository and Persuasive Writing", "Argumentative and Functional Writing"]);
@@ -125,7 +136,7 @@ export default function QuestionBank() {
 
   async function downloadWord() {
     if (!paper.length) return setNotice("Generate a paper before downloading.");
-    let logo = ""; try { logo = await dataUrl(await (await fetch("/school-logo.png")).blob()); } catch { /* text header remains */ }
+    let logo = ""; try { logo = await boundedImageDataUrl(await dataUrl(await (await fetch("/school-logo.png")).blob()), 56, 56); } catch { /* text header remains */ }
     const imageData = new Map<string, string>();
     await Promise.all([...new Set(paper.flatMap((question) => question.images ?? []))].map(async (path) => { try { imageData.set(path, await dataUrl(await (await fetch(path)).blob())); } catch { /* Question text remains available. */ } }));
     const groups: Array<[PaperType, Question[]]> = [["Practical", paper.filter((q) => matchesType(q, "Practical"))], ["Short Answer", paper.filter((q) => matchesType(q, "Short Answer"))], ["Essay", paper.filter((q) => matchesType(q, "Essay"))], ["Objective", paper.filter((q) => matchesType(q, "Objective"))]];
