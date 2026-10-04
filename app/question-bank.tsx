@@ -33,14 +33,14 @@ const englishShortAnswerTopics = new Set(["Reading Comprehension", "Summary Writ
 const englishEssayTopics = new Set(["Writing and Composition", "Narrative and Descriptive Writing", "Expository and Persuasive Writing", "Argumentative and Functional Writing"]);
 const defaultPaperType = (subject: string, topic: string): PaperType => subject === "English Language" && (englishShortAnswerTopics.has(topic) || topic.startsWith("Literature —")) ? "Short Answer" : subject === "English Language" && englishEssayTopics.has(topic) ? "Essay" : "Objective";
 
-export default function QuestionBank() {
+export default function QuestionBank({ mockMode = false }: { mockMode?: boolean }) {
   const [scope, setScope] = useState({ className: "Basic 8", subject: "Computing" });
   const [questions, setQuestions] = useState<Question[]>([]);
   const [paper, setPaper] = useState<Question[]>([]);
   const [choices, setChoices] = useState<Record<string, TopicChoice>>({});
   const [form, setForm] = useState(emptyQuestion);
   const [search, setSearch] = useState("");
-  const [paperSettings, setPaperSettings] = useState({ title: "End of Term Examination", instructions: "Answer all questions. Write clearly and show all working where necessary.", includeAnswers: true });
+  const [paperSettings, setPaperSettings] = useState({ title: mockMode ? "BECE Mock Examination" : "End of Term Examination", instructions: mockMode ? "Answer all questions unless otherwise stated. Write clearly and show all working where necessary." : "Answer all questions. Write clearly and show all working where necessary.", includeAnswers: true });
   const [showAdd, setShowAdd] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -168,7 +168,7 @@ export default function QuestionBank() {
   }
 
   return <section className="question-workspace">
-    <header className="question-hero"><div><p>Free built-in teaching tool</p><h2>Questions &amp; Examination Papers</h2><span>Select a subject, class and topics, then choose how many questions to include.</span></div><strong>{allQuestions.length}<small>available questions</small></strong></header>
+    <header className="question-hero"><div><p>{mockMode ? "BECE mock preparation" : "Free built-in teaching tool"}</p><h2>{mockMode ? "Standard BECE Mock Questions" : "Questions & Examination Papers"}</h2><span>{mockMode ? "Generate a curriculum-based mock paper for any JHS subject, class and selected topics." : "Select a subject, class and topics, then choose how many questions to include."}</span></div><strong>{allQuestions.length}<small>available questions</small></strong></header>
     {notice && <div className="question-notice" role="status"><span>{notice}</span><button onClick={() => setNotice("")} aria-label="Dismiss">×</button></div>}
     <section className="panel subject-picker"><div className="panel-head"><div><h2>1. Choose a subject</h2><p>Every configured subject has its own question bank.</p></div></div><div className="subject-button-grid">{SUBJECTS.map((subject, index) => <button key={subject} className={scope.subject === subject ? "active" : ""} onClick={() => chooseSubject(subject)}><span>{index + 1}</span>{SUBJECT_SHORT[subject]}</button>)}</div></section>
     <section className="panel class-picker"><div><h2>2. Choose one class</h2><p>The class selection applies to all chosen topics.</p></div><div className="class-radio-grid" role="radiogroup" aria-label="Class">{CLASSES.map((className) => <label key={className} className={scope.className === className ? "active" : ""}><input type="radio" name="question-class" value={className} checked={scope.className === className} onChange={() => setScope((current) => ({ ...current, className }))}/><span>{className}</span></label>)}</div></section>
