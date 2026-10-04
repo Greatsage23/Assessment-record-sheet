@@ -103,6 +103,56 @@ function readingComprehensionBank(className: string): CurriculumQuestion[] {
   });
 }
 
+function englishObjectiveBank(className: string): CurriculumQuestion[] {
+  const items: Array<[string, string, string[], string]> = [
+    ["Grammar and Language Use", "Neither the headteacher nor the teachers ___ informed about the change.", ["was", "were", "is", "has"], "were"],
+    ["Grammar and Language Use", "By the time we arrived, the match ___ already ended.", ["has", "had", "was", "is"], "had"],
+    ["Grammar and Language Use", "If Adwoa ___ earlier, she would have met the visitors.", ["came", "had come", "comes", "has come"], "had come"],
+    ["Grammar and Language Use", "The prefect, together with the class captains, ___ the compound every morning.", ["inspect", "inspects", "have inspected", "are inspecting"], "inspects"],
+    ["Grammar and Language Use", "Kofi said, ‘I will submit the work tomorrow.’ In reported speech, Kofi said that he would submit the work ___.", ["tomorrow", "the next day", "yesterday", "that morning"], "the next day"],
+    ["Grammar and Language Use", "Choose the sentence with the correct punctuation.", ["After the meeting, we returned to class.", "After the meeting we, returned to class.", "After, the meeting we returned to class.", "After the meeting we returned, to class."], "After the meeting, we returned to class."],
+    ["Grammar and Language Use", "The passive form of ‘The committee awarded Ama a prize’ is", ["Ama was awarded a prize by the committee.", "Ama awarded the committee a prize.", "A prize has awarded Ama the committee.", "The committee was awarded by Ama."], "Ama was awarded a prize by the committee."],
+    ["Grammar and Language Use", "This is the learner ___ project won the regional competition.", ["who", "whom", "whose", "which"], "whose"],
+    ["Grammar and Language Use", "The word ‘carefully’ in ‘She carefully arranged the books’ is a/an", ["noun", "adjective", "adverb", "pronoun"], "adverb"],
+    ["Grammar and Language Use", "You have completed the assignment, ___?", ["have you", "haven't you", "did you", "don't you"], "haven't you"],
+    ["Grammar and Language Use", "The learners were prevented ___ entering the unsafe building.", ["to", "from", "with", "at"], "from"],
+    ["Grammar and Language Use", "We have lived in Tamale ___ 2021.", ["for", "since", "during", "from"], "since"],
+    ["Grammar and Language Use", "Choose the correctly spelt word.", ["accomodation", "accommodation", "acommodation", "accommondation"], "accommodation"],
+    ["Grammar and Language Use", "The news ___ encouraging.", ["are", "were", "is", "have been"], "is"],
+    ["Grammar and Language Use", "Abena is one of the learners who ___ always punctual.", ["is", "was", "are", "has been"], "are"],
+    ["Grammar and Language Use", "‘Although the road was flooded, the driver continued the journey.’ The underlined idea expresses", ["purpose", "contrast", "cause", "condition"], "contrast"],
+    ["Grammar and Language Use", "Select the sentence that is grammatically correct.", ["She is more taller than her sister.", "She is taller than her sister.", "She is tallest than her sister.", "She is most tall than her sister."], "She is taller than her sister."],
+    ["Grammar and Language Use", "The teacher asked Musa and ___ to arrange the chairs.", ["I", "me", "my", "mine"], "me"],
+    ["Grammar and Language Use", "Hardly had the bell rung ___ the learners entered the hall.", ["than", "when", "then", "while"], "when"],
+    ["Grammar and Language Use", "Choose the sentence containing a conditional clause.", ["When the bell rang, we left.", "If it rains, the match will be postponed.", "Because he studied, he passed.", "Although she was tired, she worked."], "If it rains, the match will be postponed."],
+    ["Grammar and Language Use", "The expression ‘The wind whispered through the trees’ illustrates", ["simile", "personification", "hyperbole", "irony"], "personification"],
+    ["Grammar and Language Use", "Which sentence is in the present perfect tense?", ["They complete the work.", "They completed the work.", "They have completed the work.", "They had completed the work."], "They have completed the work."],
+    ["Grammar and Language Use", "The plural form of ‘criterion’ is", ["criterions", "criteria", "criterias", "criterion"], "criteria"],
+    ["Grammar and Language Use", "Choose the correct order of adjectives: She bought a ___ bag.", ["leather beautiful black", "black leather beautiful", "beautiful black leather", "leather black beautiful"], "beautiful black leather"],
+    ["Grammar and Language Use", "The meeting was postponed ___ the heavy rainfall.", ["because", "because of", "although", "despite of"], "because of"],
+    ["Vocabulary Development", "In the sentence ‘The witness gave a vivid account,’ vivid means", ["confusing", "detailed and clear", "false", "very brief"], "detailed and clear"],
+    ["Vocabulary Development", "The opposite of ‘scarce’ is", ["rare", "plentiful", "costly", "hidden"], "plentiful"],
+    ["Vocabulary Development", "The headteacher advised the learners to turn over a new leaf. This means they should", ["begin to behave better", "open another book", "plant more trees", "change their uniforms"], "begin to behave better"],
+    ["Vocabulary Development", "Which word best completes the sentence? The doctor ___ the patient before prescribing medicine.", ["examined", "watched", "stared", "glanced"], "examined"],
+    ["Vocabulary Development", "A person who writes plays is a", ["novelist", "playwright", "poet", "journalist"], "playwright"],
+    ["Vocabulary Development", "The expression ‘The new prefect is level-headed’ means the prefect is", ["short", "calm and sensible", "stubborn", "proud"], "calm and sensible"],
+    ["Vocabulary Development", "Which word does not belong to the group?", ["generous", "kind", "benevolent", "hostile"], "hostile"],
+    ["Vocabulary Development", "Choose the word nearest in meaning to ‘reluctant’.", ["unwilling", "eager", "careless", "unable"], "unwilling"],
+    ["Vocabulary Development", "The students agreed to abide ___ the rules.", ["with", "by", "on", "for"], "by"],
+    ["Vocabulary Development", "In ‘The chairman's response was ambiguous,’ ambiguous means", ["unclear", "immediate", "angry", "truthful"], "unclear"],
+    ["Oral Language and Listening", "Which word has the same vowel sound as ‘seat’?", ["sit", "set", "heat", "said"], "heat"],
+    ["Oral Language and Listening", "Which word begins with the same consonant sound as ‘judge’?", ["goat", "giant", "youth", "zebra"], "giant"],
+    ["Oral Language and Listening", "Which word has a different final consonant sound?", ["laughed", "washed", "begged", "missed"], "begged"],
+    ["Oral Language and Listening", "Which word is stressed on the second syllable?", ["TAble", "DOCtor", "reLAX", "WINdow"], "reLAX"],
+    ["Oral Language and Listening", "The intonation normally used at the end of a yes-or-no question is", ["rising", "falling", "level", "broken"], "rising"],
+  ];
+  return items.map(([topic, questionText, options, answer], index) => ({
+    id: stableId(`English-${className}-BECE-objective-${index + 1}`), className, subject: "English Language", term: "All Terms", topic,
+    questionType: "Objective", difficulty: index < 12 ? "Easy" : index < 32 ? "Moderate" : "Challenging", questionText, options, answer, marks: 1,
+    createdBy: "Built-in WAEC-aligned English bank", createdAt: "", source: "Built-in",
+  }));
+}
+
 function expositoryPersuasiveBank(className: string): CurriculumQuestion[] {
   const formats = [
     (subject: string) => `Write an article for publication in your school magazine explaining ${subject}.`,
@@ -116,6 +166,29 @@ function expositoryPersuasiveBank(className: string): CurriculumQuestion[] {
     answer: "BECE composition rubric — Content and relevance: 10 marks; organisation and paragraphing: 5 marks; expression, vocabulary and sentence variety: 10 marks; mechanical accuracy (grammar, spelling and punctuation): 5 marks. For persuasive tasks, award content marks for a clear position, developed reasons, supporting examples and an effective conclusion. For expository tasks, reward accurate explanation, logical development and suitable examples.",
     createdBy: "Built-in BECE composition bank", createdAt: "", source: "Built-in" as const,
   })));
+}
+
+function beceCompositionBank(className: string): CurriculumQuestion[] {
+  const tasks = [
+    "Write a letter to your District Director of Education describing three problems affecting teaching and learning in your school and suggesting practical solutions.",
+    "Write an article for publication in a national newspaper on three ways communities can protect young people from online fraud.",
+    "Your school is debating the motion: ‘Mobile phones should be allowed during lessons.’ Write your contribution for or against the motion.",
+    "Write a speech to be delivered at assembly on the causes of indiscipline among students and how the problem can be controlled.",
+    "Narrate an incident in which a difficult decision you made prevented a serious problem. End with: That day, I learnt that courage is not the absence of fear.",
+    "Describe a busy market immediately before and during a heavy rainstorm so that a reader can clearly picture the scene.",
+    "Write a letter to the chairperson of your community development committee explaining why the community library is poorly used and recommending three improvements.",
+    "Write an article for your school magazine explaining how students can improve their reading habits and academic performance.",
+    "You have been selected to speak at a youth forum. Write your speech on three benefits of peaceful conflict resolution in schools and communities.",
+    "Write a story that illustrates the saying: A stitch in time saves nine.",
+    "A friend intends to stop schooling to begin earning money immediately. Write a letter advising the friend to reconsider the decision.",
+    "Describe a school event that brought together learners, teachers and community members and explain why it remains memorable.",
+  ];
+  return tasks.map((questionText, index) => ({
+    id: stableId(`English-${className}-BECE-composition-${index + 1}`), className, subject: "English Language", term: "All Terms", topic: index % 4 === 0 ? "Argumentative and Functional Writing" : index % 3 === 0 ? "Expository and Persuasive Writing" : "Writing and Composition",
+    questionType: "Essay", difficulty: index < 4 ? "Moderate" : "Challenging", questionText: `${questionText} Your composition should be not less than 250 words. [30 marks]`, options: [], marks: 30,
+    answer: "WAEC-style composition rubric: content and relevance 10 marks; organisation and paragraphing 5 marks; expression, vocabulary and sentence variety 10 marks; mechanical accuracy 5 marks. Apply the correct format and register for letters, speeches, articles, debates and narratives.",
+    createdBy: "Built-in WAEC-aligned English composition bank", createdAt: "", source: "Built-in",
+  }));
 }
 
 function writtenResponseBank(className: string, topic: string, type: "Short Answer" | "Essay"): CurriculumQuestion[] {
@@ -192,14 +265,14 @@ export function buildSubjectQuestionBank(subject: string, className: string): Cu
   const shortAnswerTopics = new Set(["Summary Writing", "Summary and Note-Making", "Media Literacy", "Library and Study Skills"]);
   const essayTopics = new Set(["Writing and Composition", "Narrative and Descriptive Writing", "Argumentative and Functional Writing"]);
   const special: CurriculumQuestion[] = subject === "English Language" ? [
+    ...englishObjectiveBank(className),
     ...readingComprehensionBank(className),
-    ...(topics.includes("Expository and Persuasive Writing") ? expositoryPersuasiveBank(className) : []),
+    ...beceCompositionBank(className),
     ...topics.filter((topic) => shortAnswerTopics.has(topic)).flatMap((topic) => writtenResponseBank(className, topic, "Short Answer")),
-    ...topics.filter((topic) => essayTopics.has(topic)).flatMap((topic) => writtenResponseBank(className, topic, "Essay")),
     ...topics.filter((topic) => topic.startsWith("Literature —")).flatMap((topic) => beaconLiteratureBank(className, topic)),
   ] : [];
   const responseTopics = new Set(["Reading Comprehension", "Expository and Persuasive Writing", ...shortAnswerTopics, ...essayTopics, ...topics.filter((topic) => topic.startsWith("Literature —"))]);
-  const standardTopics = topics.filter((topic) => !(subject === "English Language" && responseTopics.has(topic)));
+  const standardTopics = subject === "English Language" ? [] : topics.filter((topic) => !responseTopics.has(topic));
   const standard = standardTopics.flatMap((topic, topicIndex) => Array.from({ length: 40 }, (_, index) => {
     const action = actions[index % actions.length];
     const correct = `Study ${topic} by learning to ${action}.`;

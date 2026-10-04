@@ -108,11 +108,12 @@ export default function QuestionBank({ mockMode = false }: { mockMode?: boolean 
         : `Random mock generated with ${objective.length} objectives, ${theory.length} theory and ${practical.length} practical question. Add more reviewed questions to complete every section.`);
     }
     if (scope.subject === "English Language") {
-      const composition = take("Essay", 3);
-      const comprehensionAndLiterature = take("Short Answer", 2);
-      setPaper([...composition, ...comprehensionAndLiterature, ...objective]);
+      const composition = shuffle(allQuestions.filter((question) => question.questionType === "Essay" && !question.topic.startsWith("Literature —"))).slice(0, 3);
+      const comprehension = shuffle(allQuestions.filter((question) => question.questionType === "Short Answer" && question.topic === "Reading Comprehension")).slice(0, 1);
+      const literature = shuffle(allQuestions.filter((question) => question.questionType === "Short Answer" && question.topic.startsWith("Literature —"))).slice(0, 10);
+      setPaper([...composition, ...comprehension, ...literature, ...objective]);
       revealGeneratedPaper();
-      return setNotice(`Random BECE English mock generated with ${objective.length} objectives, ${composition.length} composition choices and ${comprehensionAndLiterature.length} comprehension/literature sections.`);
+      return setNotice(`Random BECE English mock generated with ${objective.length} objectives, ${composition.length} composition choices, one comprehension passage and ${literature.length} literature questions.`);
     }
     const written = take("Essay", 5);
     setPaper([...written, ...objective]);
