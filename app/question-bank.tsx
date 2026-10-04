@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { buildComputingQuestionBank, computingTopicsForClass } from "./computing-question-bank";
 import { curriculumTopicsFor } from "./curriculum-topics";
 import { buildSubjectQuestionBank } from "./subject-question-bank";
+import { buildBeceMockQuestionBank } from "./bece-mock-question-bank";
 
 const CLASSES = ["Basic 7", "Basic 8", "Basic 9"];
 const SUBJECTS = ["English Language", "Mathematics", "Science", "Social Studies", "Computing", "Religious and Moral Education", "Creative Arts and Design", "Career Technology", "Ghanaian Language", "French"];
@@ -59,7 +60,8 @@ export default function QuestionBank({ mockMode = false }: { mockMode?: boolean 
   useEffect(() => { void loadQuestions(); }, [loadQuestions]);
 
   const builtIn = useMemo(() => scope.subject === "Computing" ? buildComputingQuestionBank(scope.className) : buildSubjectQuestionBank(scope.subject, scope.className), [scope]);
-  const allQuestions = useMemo(() => [...builtIn, ...questions], [builtIn, questions]);
+  const mockQuestions = useMemo(() => mockMode ? buildBeceMockQuestionBank(scope.subject, scope.className) : [], [mockMode, scope]);
+  const allQuestions = useMemo(() => [...mockQuestions, ...builtIn, ...questions], [mockQuestions, builtIn, questions]);
   const topics = useMemo(() => {
     const curriculum = scope.subject === "Computing" ? computingTopicsForClass(scope.className) : scope.subject === "Ghanaian Language" ? [] : curriculumTopicsFor(scope.subject, scope.className);
     return [...new Set([...curriculum, ...allQuestions.map((question) => question.topic)])];
@@ -168,7 +170,8 @@ export default function QuestionBank({ mockMode = false }: { mockMode?: boolean 
   }
 
   return <section className="question-workspace">
-    <header className="question-hero"><div><p>{mockMode ? "BECE mock preparation" : "Free built-in teaching tool"}</p><h2>{mockMode ? "Standard BECE Mock Questions" : "Questions & Examination Papers"}</h2><span>{mockMode ? "Generate a curriculum-based mock paper for any JHS subject, class and selected topics." : "Select a subject, class and topics, then choose how many questions to include."}</span></div><strong>{allQuestions.length}<small>available questions</small></strong></header>
+    <header className="question-hero"><div><p>{mockMode ? "BECE mock preparation" : "Free built-in teaching tool"}</p><h2>{mockMode ? "Standard BECE Mock Questions" : "Questions & Examination Papers"}</h2><span>{mockMode ? "Generate an original practice paper aligned to the official WAEC BECE structure and NaCCA curriculum." : "Select a subject, class and topics, then choose how many questions to include."}</span></div><strong>{allQuestions.length}<small>available questions</small></strong></header>
+    {mockMode && <div className="question-notice" role="note"><span><b>Updated mock bank:</b> includes applied, scenario-based items modelled on official WAEC schemes. Questions are original practice material, not copied past papers.</span></div>}
     {notice && <div className="question-notice" role="status"><span>{notice}</span><button onClick={() => setNotice("")} aria-label="Dismiss">×</button></div>}
     <section className="panel subject-picker"><div className="panel-head"><div><h2>1. Choose a subject</h2><p>Every configured subject has its own question bank.</p></div></div><div className="subject-button-grid">{SUBJECTS.map((subject, index) => <button key={subject} className={scope.subject === subject ? "active" : ""} onClick={() => chooseSubject(subject)}><span>{index + 1}</span>{SUBJECT_SHORT[subject]}</button>)}</div></section>
     <section className="panel class-picker"><div><h2>2. Choose one class</h2><p>The class selection applies to all chosen topics.</p></div><div className="class-radio-grid" role="radiogroup" aria-label="Class">{CLASSES.map((className) => <label key={className} className={scope.className === className ? "active" : ""}><input type="radio" name="question-class" value={className} checked={scope.className === className} onChange={() => setScope((current) => ({ ...current, className }))}/><span>{className}</span></label>)}</div></section>
