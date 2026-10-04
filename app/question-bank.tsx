@@ -96,7 +96,12 @@ export default function QuestionBank({ mockMode = false }: { mockMode?: boolean 
   }
 
   function generateRandomBeceMock() {
-    const take = (type: PaperType, count: number) => shuffle(allQuestions.filter((question) => matchesType(question, type))).slice(0, count);
+    const take = (type: PaperType, count: number) => {
+      const preferred = shuffle(mockQuestions.filter((question) => matchesType(question, type)));
+      const preferredIds = new Set(preferred.map((question) => question.id));
+      const remaining = shuffle(allQuestions.filter((question) => matchesType(question, type) && !preferredIds.has(question.id)));
+      return [...preferred, ...remaining].slice(0, count);
+    };
     const objective = take("Objective", 40).map((question) => ({ ...question, marks: 1 }));
     if (scope.subject === "Computing") {
       const theory = take("Essay", 4).map((question) => ({ ...question, marks: 12 }));
