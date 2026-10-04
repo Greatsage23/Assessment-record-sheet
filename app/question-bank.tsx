@@ -91,6 +91,10 @@ export default function QuestionBank({ mockMode = false }: { mockMode?: boolean 
   }
   function chooseSubject(subject: string) { setScope((current) => ({ ...current, subject })); setSearch(""); setShowAdd(false); }
 
+  function revealGeneratedPaper() {
+    window.setTimeout(() => document.querySelector(".paper-builder")?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+  }
+
   function generateRandomBeceMock() {
     const take = (type: PaperType, count: number) => shuffle(allQuestions.filter((question) => matchesType(question, type))).slice(0, count);
     const objective = take("Objective", 40).map((question) => ({ ...question, marks: 1 }));
@@ -98,6 +102,7 @@ export default function QuestionBank({ mockMode = false }: { mockMode?: boolean 
       const theory = take("Essay", 4).map((question) => ({ ...question, marks: 12 }));
       const practical = take("Practical", 1).map((question) => ({ ...question, marks: 24 }));
       setPaper([...practical, ...theory, ...objective]);
+      revealGeneratedPaper();
       return setNotice(objective.length === 40 && theory.length === 4 && practical.length === 1
         ? "Complete random BECE Computing mock generated: 40 objectives, four theory questions and one compulsory practical."
         : `Random mock generated with ${objective.length} objectives, ${theory.length} theory and ${practical.length} practical question. Add more reviewed questions to complete every section.`);
@@ -106,10 +111,12 @@ export default function QuestionBank({ mockMode = false }: { mockMode?: boolean 
       const composition = take("Essay", 3);
       const comprehensionAndLiterature = take("Short Answer", 2);
       setPaper([...composition, ...comprehensionAndLiterature, ...objective]);
+      revealGeneratedPaper();
       return setNotice(`Random BECE English mock generated with ${objective.length} objectives, ${composition.length} composition choices and ${comprehensionAndLiterature.length} comprehension/literature sections.`);
     }
     const written = take("Essay", 5);
     setPaper([...written, ...objective]);
+    revealGeneratedPaper();
     setNotice(`Random BECE ${scope.subject} mock generated with ${objective.length} objectives and ${written.length} written questions. Teachers may review the paper before downloading.`);
   }
 
@@ -197,7 +204,7 @@ export default function QuestionBank({ mockMode = false }: { mockMode?: boolean 
     {notice && <div className="question-notice" role="status"><span>{notice}</span><button onClick={() => setNotice("")} aria-label="Dismiss">×</button></div>}
     <section className="panel subject-picker"><div className="panel-head"><div><h2>1. Choose a subject</h2><p>Every configured subject has its own question bank.</p></div></div><div className="subject-button-grid">{SUBJECTS.map((subject, index) => <button key={subject} className={scope.subject === subject ? "active" : ""} onClick={() => chooseSubject(subject)}><span>{index + 1}</span>{SUBJECT_SHORT[subject]}</button>)}</div></section>
     {!mockMode && <section className="panel class-picker"><div><h2>2. Choose one class</h2><p>The class selection applies to all chosen topics.</p></div><div className="class-radio-grid" role="radiogroup" aria-label="Class">{CLASSES.map((className) => <label key={className} className={scope.className === className ? "active" : ""}><input type="radio" name="question-class" value={className} checked={scope.className === className} onChange={() => setScope((current) => ({ ...current, className }))}/><span>{className}</span></label>)}</div></section>}
-    {mockMode && <section className="panel random-mock-panel"><div><span>ONE-CLICK PAPER</span><h2>Generate a complete random BECE mock</h2><p>No topic selection is required. The system randomly covers the available curriculum and assembles the objective, written and Computing practical sections.</p></div><button className="primary" onClick={generateRandomBeceMock} disabled={loading}>⚄ Generate Complete Random Mock</button></section>}
+    {mockMode && <section className="panel random-mock-panel"><div><span>ONE-CLICK PAPER</span><h2>Generate a complete random BECE mock</h2><p>No topic selection is required. The system randomly covers the available curriculum and assembles the objective, written and Computing practical sections.</p></div><button type="button" className="primary" onClick={generateRandomBeceMock}>⚄ {paper.length ? "Generate Another Random Mock" : "Generate Complete Random Mock"}</button></section>}
     <section className="panel topic-planner"><div className="panel-head"><div><h2>3. Select topics and paper sections</h2><p>{scope.subject === "Computing" ? "Assign topics to Objective, Essay or Practical. The system randomly chooses 40 MCQs, four theory questions and one practical." : "Select each topic, question type and required quantity."}</p></div><button className="secondary compact" onClick={() => setShowAdd((value) => !value)}>{showAdd ? "Close form" : "+ Add question"}</button></div>
       {scope.subject === "English Language" && <div className="literature-outline"><div><strong>English Language aspects</strong><span>Oral language · Reading · Grammar · Vocabulary · Writing</span></div><div><strong>The Beacon of Light literature</strong><span>9 prose stories · 3 plays · 4 poems</span><small>Text-dependent questions assess plot or subject matter, character, setting, conflict, themes, language, dramatic or poetic technique, values and relevance.</small></div></div>}
       {loading ? <div className="question-empty"><b>Loading question bank…</b></div> : topics.length === 0 ? <div className="question-empty"><span>?</span><b>No topics available for {scope.subject}</b><p>Add reviewed questions to create this subject's topic list.</p></div> : <div className="topic-selection-list">{topics.map((topic) => { const choice = choices[topic] ?? { selected: false, count: 1, type: "Objective" as PaperType }; const available = allQuestions.filter((q) => q.topic === topic && matchesType(q, choice.type)).length; const types = ["Objective", ...(scope.subject === "English Language" ? ["Short Answer"] : []), "Essay", ...(scope.subject === "Computing" ? ["Practical"] : [])] as PaperType[]; const maximum = scope.subject === "Computing" ? choice.type === "Objective" ? 40 : choice.type === "Essay" ? 4 : 1 : 50; return <article key={topic} className={choice.selected ? "selected" : ""}><label className="topic-check"><input type="checkbox" checked={choice.selected} onChange={(e) => updateChoice(topic, { selected: e.target.checked })}/><span><b>{topic}</b><small>{available} {choice.type.toLowerCase()} questions available</small></span></label><fieldset disabled={!choice.selected}><legend>Paper section</legend>{types.map((type) => <label key={type}><input type="radio" name={`type-${topic}`} checked={choice.type === type} onChange={() => updateChoice(topic, { type, count: Math.min(choice.count, type === "Objective" ? 40 : type === "Essay" ? 4 : 1) })}/>{type}</label>)}</fieldset><label className="topic-count">Number<input type="number" min="1" max={maximum} disabled={!choice.selected} value={choice.count} onChange={(e) => updateChoice(topic, { count: Math.max(1, Math.min(maximum, Number(e.target.value) || 1)) })}/></label></article>; })}</div>}
