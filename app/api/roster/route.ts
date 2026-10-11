@@ -1,6 +1,7 @@
 import { and, asc, eq } from "drizzle-orm";
 import { ensureDatabase, getDb } from "../../../db";
 import { attendance, records, studentRoster } from "../../../db/schema";
+import { OFFICIAL_ROSTER } from "../../official-roster";
 
 const ADMIN_PASSWORD = "administrator";
 const HEADTEACHER_PASSWORD = process.env.HEADTEACHER_PASSWORD || "head";
@@ -38,7 +39,9 @@ async function createSubjectRecords(students: { studentCode: string; name: strin
       updatedAt,
     }))),
   );
-  await db.insert(records).values(subjectRecords).onConflictDoNothing();
+  for (let index = 0; index < subjectRecords.length; index += 500) {
+    await db.insert(records).values(subjectRecords.slice(index, index + 500)).onConflictDoNothing();
+  }
 }
 
 export async function GET(request: Request) {
@@ -62,9 +65,48 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     await ensureDatabase();
-    const payload = await request.json() as { password?: string; students?: RosterInput[] };
+    const payload = await request.json() as { password?: string; action?: string; students?: RosterInput[] };
     if (!isAdministrator(payload)) return Response.json({ error: "Incorrect management password." }, { status: 401 });
     const db = await getDb();
+
+    if (payload.action === "installOfficialRoster") {
+      const officialStudents = Object.entries(OFFICIAL_ROSTER).flatMap(([className, names]) => names.map((name, index) => ({
+        studentCode: String(index + 1).padStart(3, "0"), name, className,
+      })));
+      const normalizeName = (name: string) => name.trim().replace(/\s+/g, " ").toLocaleUpperCase();
+      const existingRoster = await db.select().from(studentRoster);
+      const existingRecords = await db.select().from(records);
+      const existingAttendance = await db.select().from(attendance);
+      const oldStudentNames = new Map(existingRoster.map((student) => [`${student.className}::${student.studentCode}`, student.name]));
+      const newStudentsByName = new Map(officialStudents.map((student) => [normalizeName(student.name), student]));
+      const migratedRecords = existingRecords.flatMap((record) => {
+        const student = newStudentsByName.get(normalizeName(record.name));
+        return student ? [{ ...student, subject: record.subject, term: record.term, classScore: record.classScore, examScore: record.examScore, updatedAt: new Date().toISOString() }] : [];
+      });
+      const migratedAttendance = existingAttendance.flatMap((entry) => {
+        const oldName = oldStudentNames.get(`${entry.className}::${entry.studentCode}`);
+        const student = oldName ? newStudentsByName.get(normalizeName(oldName)) : undefined;
+        return student ? [{ studentCode: student.studentCode, className: student.className, attendanceDate: entry.attendanceDate, status: entry.status, updatedAt: new Date().toISOString() }] : [];
+      });
+      await db.delete(attendance);
+      await db.delete(records);
+      await db.delete(studentRoster);
+      await db.insert(studentRoster).values(officialStudents.map((student) => ({ ...student, updatedAt: new Date().toISOString() })));
+      for (let index = 0; index < migratedRecords.length; index += 500) {
+        await db.insert(records).values(migratedRecords.slice(index, index + 500)).onConflictDoNothing();
+      }
+      for (let index = 0; index < migratedAttendance.length; index += 500) {
+        await db.insert(attendance).values(migratedAttendance.slice(index, index + 500)).onConflictDoNothing();
+      }
+      await createSubjectRecords(officialStudents);
+      return Response.json({
+        ok: true,
+        installed: officialStudents.length,
+        preservedAssessmentRecords: migratedRecords.length,
+        preservedAttendanceRecords: migratedAttendance.length,
+        classes: Object.fromEntries(Object.entries(OFFICIAL_ROSTER).map(([className, names]) => [className, names.length])),
+      });
+    }
 
     const students = payload.students ?? [];
     if (!students.length) return Response.json({ error: "Add at least one student." }, { status: 400 });
