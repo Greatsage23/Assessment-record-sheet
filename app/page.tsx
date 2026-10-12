@@ -5,6 +5,7 @@ import SchemeOfWork from "./scheme-of-work";
 import QuestionBank from "./question-bank";
 import LessonNotes from "./lesson-notes";
 import HeadteacherDashboard from "./headteacher-dashboard";
+import { DEFAULT_SCHOOL_TEACHERS } from "./school-teachers";
 import "./resources.css";
 
 type Student = {
@@ -51,27 +52,6 @@ const JHS_SUBJECTS = [
   "Career Technology",
   "Ghanaian Language",
   "French",
-] as const;
-const SCHOOL_TEACHERS = [
-  "MOHAMMED ZAKRIA LUKMAN",
-  "ABDUL-WAHAB ABDUL-JALIL",
-  "MOHAMMED ABDALLAH",
-  "SEINI AMIN",
-  "DANIEL ABUKARI",
-  "OWUSU ADJEI. JOHNNY",
-  "KURUGU WALTRUDE",
-  "ZAKARIA ABDULAI",
-  "YAHAYA AYISHA",
-  "ABDULAI RAHINATU",
-  "ADAM W. ABUKARI",
-  "MESUNA BARIKISU",
-  "MOHAMMED AFISHETU",
-  "ADAM FAIZA",
-  "IDDRISU ABDUL RAHAMAN",
-  "FUSEINI AYISHA",
-  "UMAR MARIAM",
-  "ANASTASIA EXORMNAM KPEGLO",
-  "CHEMA UWUMBORAKUMI SAMPSON",
 ] as const;
 const SCHOOL_CLASSES = ["Basic 7 Red", "Basic 7 Blue", "Basic 8 Red", "Basic 8 Blue", "Basic 9 Red", "Basic 9 Blue"] as const;
 const GRADE_LEVELS = ["Basic 7", "Basic 8", "Basic 9"] as const;
@@ -189,6 +169,8 @@ export default function Home() {
   const [authenticationStatusKnown, setAuthenticationStatusKnown] = useState(false);
   const [scoreEntryPending, setScoreEntryPending] = useState(false);
   const [teacherForm, setTeacherForm] = useState({ className: "Basic 8 Red", subject: "Mathematics", teacherName: "" });
+  const [schoolTeachers, setSchoolTeachers] = useState<string[]>([...DEFAULT_SCHOOL_TEACHERS]);
+  const [newTeacherName, setNewTeacherName] = useState("");
   const [teacherAssignments, setTeacherAssignments] = useState<{ className: string; subject: string; teacherName: string; updatedAt: string }[]>([]);
   const [selectedTeacher, setSelectedTeacher] = useState("");
   const [roster, setRoster] = useState<RosterStudent[]>([]);
@@ -363,9 +345,50 @@ export default function Home() {
     setTeacherAssignments(data.assignments ?? []);
   }
 
+  async function loadSchoolTeachers(password = headteacherPassword) {
+    const response = await fetch("/api/teachers", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "directory", adminPassword: password }),
+    });
+    const data = await response.json() as { teachers?: string[]; error?: string };
+    if (!response.ok) return setMessage(data.error ?? "The teacher list could not be loaded.");
+    setSchoolTeachers(data.teachers ?? []);
+  }
+
   useEffect(() => {
-    if (view === "headteacher") void loadTeacherAssignments(headteacherPassword);
+    if (view === "headteacher") void Promise.allSettled([
+      loadTeacherAssignments(headteacherPassword),
+      loadSchoolTeachers(headteacherPassword),
+    ]);
   }, [view]);
+
+  async function addSchoolTeacher(event: FormEvent) {
+    event.preventDefault();
+    const teacherName = newTeacherName.trim();
+    if (!teacherName) return;
+    const response = await fetch("/api/teachers", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "add-teacher", adminPassword: headteacherPassword, teacherName }),
+    });
+    const data = await response.json() as { teachers?: string[]; error?: string };
+    if (!response.ok) return setMessage(data.error ?? "The teacher could not be added.");
+    setSchoolTeachers(data.teachers ?? []);
+    setNewTeacherName("");
+    setMessage(`${teacherName.toUpperCase()} added to the teacher list.`);
+  }
+
+  async function removeSchoolTeacher(teacherName: string) {
+    if (!window.confirm(`Remove ${teacherName} from the teacher dropdown? Existing subject assignments will be kept.`)) return;
+    const response = await fetch("/api/teachers", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "remove-teacher", adminPassword: headteacherPassword, teacherName }),
+    });
+    const data = await response.json() as { teachers?: string[]; error?: string };
+    if (!response.ok) return setMessage(data.error ?? "The teacher could not be removed.");
+    setSchoolTeachers(data.teachers ?? []);
+    if (teacherForm.teacherName === teacherName) setTeacherForm({ ...teacherForm, teacherName: "" });
+    setMessage(`${teacherName} removed from the teacher dropdown.`);
+  }
 
   async function saveSubjectTeacher(event: FormEvent) {
     event.preventDefault();
@@ -696,7 +719,7 @@ export default function Home() {
         {view === "teacher" && <section className="teacher-workspace"><div className="teacher-workspace-hero"><span><Icon name="users" size={30}/></span><div><p className="eyebrow">Teacher workspace</p><h2>Prepare and submit weekly lesson notes</h2><p>Open Lesson Notes under Resources, load the correct subject, class and week, edit the content and submit it to the headteacher.</p><button className="primary" onClick={() => setView("lessonNotes")}><Icon name="file" size={18}/>Open Lesson Notes</button></div></div><div className="teacher-workflow"><article><b>1</b><span><strong>Prepare</strong><small>Load the weekly note from the Scheme of Work.</small></span></article><article><b>2</b><span><strong>Edit</strong><small>Verify curriculum codes and refine every lesson phase.</small></span></article><article><b>3</b><span><strong>Submit</strong><small>Send the completed note to the headteacher for vetting.</small></span></article></div></section>}
         {view === "headteacher" && <HeadteacherDashboard><section className="headteacher-management"><div className="headteacher-management-head"><div><h2>School Management</h2><p>Manage the official student roster and subject-teacher assignments.</p></div><label>Class<select value={filter.className} onChange={(event) => setFilter({ ...filter, className: event.target.value })}>{SCHOOL_CLASSES.map((className) => <option key={className}>{className}</option>)}</select></label></div><div className="admin-section-tabs"><button className={headManagementSection === "students" ? "active" : ""} onClick={() => setHeadManagementSection("students")}><Icon name="users" size={19}/>Student List</button><button className={headManagementSection === "teachers" ? "active" : ""} onClick={() => setHeadManagementSection("teachers")}><Icon name="users" size={19}/>Subject Teachers</button></div>
           {headManagementSection === "students" && <><section className="panel roster-tools"><div className="panel-head"><div><h2>Add or upload students</h2><p>{filter.className} · The official roster shared by every subject teacher</p></div></div><div className="roster-actions"><form onSubmit={addRosterStudent}><label>Student name<input required value={rosterForm.name} onChange={(event) => setRosterForm({ name: event.target.value })} placeholder="Full name"/></label><label>Index number<input value="Generated automatically" readOnly aria-label="Index number generated automatically"/></label><button className="primary" type="submit"><Icon name="plus" size={18}/>Add to all subjects</button></form><div className="upload-box"><Icon name="download" size={28}/><strong>Upload student list</strong><span>Excel/CSV: Student names in column A. Index numbers are generated automatically.</span><label className="secondary">Choose Excel file<input type="file" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadRoster(file); }}/></label></div></div></section><section className="panel attendance-panel"><div className="panel-head"><div><h2>Official student list</h2><p>{filter.className} · Index numbers are assigned automatically in ascending order.</p></div></div><div className="table-scroll"><table><thead><tr><th>Index number</th><th>Student</th><th>Class</th><th>Action</th></tr></thead><tbody>{rosterLoading ? <tr><td colSpan={4} className="empty">Loading the official student list…</td></tr> : roster.length === 0 ? <tr><td colSpan={4} className="empty">No students have been added to {filter.className} yet.</td></tr> : roster.map((student, index) => <tr key={student.id}><td><strong>{student.studentCode}</strong></td><td><span className={`avatar small tone-${index % 5}`}>{initials(student.name)}</span><span><strong>{student.name}</strong></span></td><td>{student.className}</td><td><button className="danger-icon" onClick={() => void removeRosterStudent(student)} aria-label={`Remove ${student.name}`}><Icon name="trash" size={17}/></button></td></tr>)}</tbody></table></div><div className="attendance-save"><span>{roster.length} student{roster.length === 1 ? "" : "s"} in the official list</span><strong>Next index: {nextRosterIndex(roster)}</strong></div></section></>}
-          {headManagementSection === "teachers" && <section className="teacher-admin-grid"><section className="panel teacher-assignment"><div className="panel-head"><div><h2>Assign subject teacher</h2><p>Select a class, subject and teacher from the official staff list.</p></div></div><form onSubmit={saveSubjectTeacher}><label>Class<select value={teacherForm.className} onChange={(event) => setTeacherForm({ ...teacherForm, className: event.target.value })}>{SCHOOL_CLASSES.map((className) => <option key={className}>{className}</option>)}</select></label><label>Subject<select value={teacherForm.subject} onChange={(event) => setTeacherForm({ ...teacherForm, subject: event.target.value })}>{JHS_SUBJECTS.map((subject) => <option key={subject}>{subject}</option>)}</select></label><label>Teacher name<select required value={teacherForm.teacherName} onChange={(event) => setTeacherForm({ ...teacherForm, teacherName: event.target.value })}><option value="">Select teacher</option>{SCHOOL_TEACHERS.map((teacher) => <option key={teacher} value={teacher}>{teacher}</option>)}</select></label><button className="primary" type="submit">Save teacher assignment</button></form></section><section className="panel teacher-directory"><div className="panel-head"><div><h2>Subject teacher directory</h2><p>{teacherAssignments.length} class–subject assignment{teacherAssignments.length === 1 ? "" : "s"} saved</p></div></div><div>{teacherAssignments.length === 0 ? <p className="empty-passwords">No subject teachers have been assigned yet.</p> : teacherAssignments.map((item) => <article key={`${item.className}-${item.subject}`}><span className="avatar small">{initials(item.teacherName)}</span><div><strong>{item.teacherName}</strong><small>{item.subject} · {item.className}</small></div></article>)}</div></section></section>}
+          {headManagementSection === "teachers" && <section className="teacher-admin-grid"><section className="panel teacher-assignment"><div className="panel-head"><div><h2>Assign subject teacher</h2><p>Select a class, subject and teacher from the official staff list.</p></div></div><form onSubmit={saveSubjectTeacher}><label>Class<select value={teacherForm.className} onChange={(event) => setTeacherForm({ ...teacherForm, className: event.target.value })}>{SCHOOL_CLASSES.map((className) => <option key={className}>{className}</option>)}</select></label><label>Subject<select value={teacherForm.subject} onChange={(event) => setTeacherForm({ ...teacherForm, subject: event.target.value })}>{JHS_SUBJECTS.map((subject) => <option key={subject}>{subject}</option>)}</select></label><label>Teacher name<select required value={teacherForm.teacherName} onChange={(event) => setTeacherForm({ ...teacherForm, teacherName: event.target.value })}><option value="">Select teacher</option>{schoolTeachers.map((teacher) => <option key={teacher} value={teacher}>{teacher}</option>)}</select></label><button className="primary" type="submit">Save teacher assignment</button></form></section><section className="panel teacher-directory"><div className="panel-head"><div><h2>Subject teacher directory</h2><p>{teacherAssignments.length} class–subject assignment{teacherAssignments.length === 1 ? "" : "s"} saved</p></div></div><div>{teacherAssignments.length === 0 ? <p className="empty-passwords">No subject teachers have been assigned yet.</p> : teacherAssignments.map((item) => <article key={`${item.className}-${item.subject}`}><span className="avatar small">{initials(item.teacherName)}</span><div><strong>{item.teacherName}</strong><small>{item.subject} · {item.className}</small></div></article>)}</div></section><section className="panel staff-directory-manager"><div className="panel-head"><div><h2>Manage teacher dropdown</h2><p>Add or remove teachers available for subject assignment.</p></div></div><form onSubmit={addSchoolTeacher}><label>Teacher&apos;s full name<input required value={newTeacherName} onChange={(event) => setNewTeacherName(event.target.value)} placeholder="Enter teacher's full name"/></label><button className="primary" type="submit"><Icon name="plus" size={18}/>Add teacher</button></form><div className="staff-directory-list">{schoolTeachers.length === 0 ? <p className="empty-passwords">No teachers are currently available.</p> : schoolTeachers.map((teacher) => <article key={teacher}><span className="avatar small">{initials(teacher)}</span><strong>{teacher}</strong><button type="button" className="danger-icon" onClick={() => void removeSchoolTeacher(teacher)} aria-label={`Remove ${teacher}`}><Icon name="trash" size={17}/></button></article>)}</div></section></section>}
         </section></HeadteacherDashboard>}
 
         {view === "administrator" && !adminUnlocked && <section className="admin-lock panel">
