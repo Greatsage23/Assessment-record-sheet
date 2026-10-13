@@ -53,6 +53,23 @@ async function initializeDatabase() {
   )`;
   await sql`CREATE UNIQUE INDEX IF NOT EXISTS record_student_assessment_idx
     ON assessment_records (student_code, class_name, subject, term)`;
+  await sql`ALTER TABLE assessment_records ADD COLUMN IF NOT EXISTS academic_year TEXT DEFAULT '2026/2027' NOT NULL`;
+  await sql`DROP INDEX IF EXISTS record_student_assessment_idx`;
+  await sql`CREATE UNIQUE INDEX IF NOT EXISTS record_student_assessment_idx
+    ON assessment_records (student_code, class_name, subject, term, academic_year)`;
+  await sql`CREATE TABLE IF NOT EXISTS continuous_assessments (
+    id SERIAL PRIMARY KEY,
+    student_code TEXT NOT NULL,
+    class_name TEXT NOT NULL,
+    subject TEXT NOT NULL,
+    term TEXT NOT NULL,
+    academic_year TEXT NOT NULL,
+    scores TEXT DEFAULT '[]' NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
+  )`;
+  await sql`CREATE UNIQUE INDEX IF NOT EXISTS continuous_assessment_scope_idx
+    ON continuous_assessments (student_code, class_name, subject, term, academic_year)`;
   await sql`CREATE TABLE IF NOT EXISTS app_meta (
     key TEXT PRIMARY KEY NOT NULL,
     value TEXT NOT NULL

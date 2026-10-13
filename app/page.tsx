@@ -5,6 +5,7 @@ import SchemeOfWork from "./scheme-of-work";
 import QuestionBank from "./question-bank";
 import LessonNotes from "./lesson-notes";
 import HeadteacherDashboard from "./headteacher-dashboard";
+import Exercise from "./exercise";
 import { DEFAULT_SCHOOL_TEACHERS } from "./school-teachers";
 import "./resources.css";
 
@@ -21,7 +22,7 @@ type Student = {
 };
 type RosterStudent = { id: number; studentCode: string; name: string; className: string };
 
-type View = "dashboard" | "scorebook" | "administrator" | "teacher" | "headteacher" | "resources" | "schemes" | "lessonNotes" | "questions" | "mockQuestions" | "reports" | "overall" | "settings";
+type View = "dashboard" | "scorebook" | "exercise" | "administrator" | "teacher" | "headteacher" | "resources" | "schemes" | "lessonNotes" | "questions" | "mockQuestions" | "reports" | "overall" | "settings";
 type AdminSection = "students" | "teachers" | "passwords" | "schemes";
 type ReportDetails = {
   academicYear: string;
@@ -55,10 +56,12 @@ const JHS_SUBJECTS = [
 ] as const;
 const SCHOOL_CLASSES = ["Basic 7 Red", "Basic 7 Blue", "Basic 8 Red", "Basic 8 Blue", "Basic 9 Red", "Basic 9 Blue"] as const;
 const GRADE_LEVELS = ["Basic 7", "Basic 8", "Basic 9"] as const;
+const ACADEMIC_YEARS = Array.from({ length: 10 }, (_, index) => `${2026 + index}/${2027 + index}`);
 
 const navItems: { id: View; label: string; icon: string }[] = [
   { id: "dashboard", label: "Dashboard", icon: "grid" },
   { id: "scorebook", label: "Scorebook", icon: "book" },
+  { id: "exercise", label: "Exercise", icon: "edit" },
   { id: "administrator", label: "Administrator", icon: "settings" },
   { id: "teacher", label: "Teacher", icon: "users" },
   { id: "headteacher", label: "Headteacher", icon: "headteacher" },
@@ -153,6 +156,7 @@ export default function Home() {
   const [termAverages, setTermAverages] = useState<Array<{ term: string; average: number | null }>>([]);
   const [modal, setModal] = useState<"subjectLogin" | "scores" | "report" | null>(null);
   const [filter, setFilter] = useState({ className: "Basic 8 Red", subject: "Mathematics", term: "Term 1" });
+  const [academicYear, setAcademicYear] = useState("2026/2027");
   const [overallGrade, setOverallGrade] = useState("Basic 8");
   const [overallRecords, setOverallRecords] = useState<Student[]>([]);
   const [overallLoading, setOverallLoading] = useState(false);
@@ -195,10 +199,31 @@ export default function Home() {
     headteacherName: "",
   });
 
+  const loadAcademicPeriod = useCallback(async () => {
+    try {
+      const response = await fetch("/api/academic-period");
+      const data = await response.json() as { academicYear?: string; term?: string };
+      if (!response.ok) return;
+      setAcademicYear(data.academicYear ?? "2026/2027");
+      setFilter((current) => ({ ...current, term: data.term ?? "Term 1" }));
+    } catch { /* retain the default period while offline */ }
+  }, []);
+
+  useEffect(() => { void loadAcademicPeriod(); }, [loadAcademicPeriod]);
+  useEffect(() => { setReportDetails((current) => ({ ...current, academicYear })); }, [academicYear]);
+
+  async function saveAcademicPeriod(password: string) {
+    const response = await fetch("/api/academic-period", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password, academicYear, term: filter.term }) });
+    const data = await response.json() as { error?: string };
+    if (!response.ok) return setMessage(data.error ?? "The academic period could not be updated.");
+    setMessage(`${academicYear} · ${filter.term} is now the active academic period.`);
+    void loadStudents();
+  }
+
   const loadStudents = useCallback(async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams(filter);
+      const params = new URLSearchParams({ ...filter, academicYear });
       const response = await fetch(`/api/records?${params}`);
       if (!response.ok) throw new Error("Could not load records");
       const data = await response.json() as { students: Student[] };
@@ -208,7 +233,7 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  }, [filter]);
+  }, [filter, academicYear]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => { void loadStudents(); }, 0);
@@ -218,7 +243,7 @@ export default function Home() {
   useEffect(() => {
     const controller = new AbortController();
     Promise.all(["Term 1", "Term 2", "Term 3"].map(async (term) => {
-      const params = new URLSearchParams({ className: filter.className, subject: filter.subject, term });
+      const params = new URLSearchParams({ className: filter.className, subject: filter.subject, term, academicYear });
       const response = await fetch(`/api/records?${params}`, { signal: controller.signal });
       if (!response.ok) return { term, average: null };
       const data = await response.json() as { students: Student[] };
@@ -226,7 +251,7 @@ export default function Home() {
       return { term, average };
     })).then(setTermAverages).catch(() => undefined);
     return () => controller.abort();
-  }, [filter.className, filter.subject]);
+  }, [filter.className, filter.subject, academicYear]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -280,7 +305,7 @@ export default function Home() {
   async function updateScores(student: Student, classScore: number, examScore: number) {
     const response = await fetch("/api/records", {
       method: "PUT", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...student, classScore, examScore, subjectPassword }),
+      body: JSON.stringify({ ...student, academicYear, classScore, examScore, subjectPassword }),
     });
     if (!response.ok) {
       setMessage("Score not saved. The subject password may have changed.");
@@ -571,7 +596,7 @@ export default function Home() {
     setOverallGrade(gradeLevel);
     setView("overall");
     try {
-      const params = new URLSearchParams({ gradeLevel, term: filter.term, allSubjects: "true" });
+      const params = new URLSearchParams({ gradeLevel, term: filter.term, academicYear, allSubjects: "true" });
       const response = await fetch(`/api/records?${params}`);
       if (!response.ok) throw new Error("Could not load combined performance");
       const data = await response.json() as { students: Student[] };
@@ -592,7 +617,7 @@ export default function Home() {
 
   async function exportReportCards() {
     try {
-      const params = new URLSearchParams({ className: filter.className, term: filter.term, allSubjects: "true" });
+      const params = new URLSearchParams({ className: filter.className, term: filter.term, academicYear, allSubjects: "true" });
       const response = await fetch(`/api/records?${params}`);
       if (!response.ok) throw new Error("Could not prepare report cards");
       const data = await response.json() as { students: Student[] };
@@ -626,7 +651,7 @@ export default function Home() {
 
   async function openReportCard() {
     try {
-      const params = new URLSearchParams({ className: filter.className, term: filter.term, allSubjects: "true" });
+      const params = new URLSearchParams({ className: filter.className, term: filter.term, academicYear, allSubjects: "true" });
       const response = await fetch(`/api/records?${params}`);
       if (!response.ok) throw new Error("Could not prepare report card");
       const data = await response.json() as { students: Student[] };
@@ -643,7 +668,7 @@ export default function Home() {
     }
   }
 
-  const pageTitle = ({ dashboard: "Assessment Overview", scorebook: "Assessment Record", administrator: "Administrator", teacher: "Teacher Dashboard", headteacher: "Headteacher Dashboard", resources: "Teaching Resources", schemes: "Scheme of Work", lessonNotes: "Lesson Notes", questions: "Questions", mockQuestions: "BECE Mock Questions", reports: "Performance Report", overall: "Combined Grade Performance", settings: "Assessment Settings" } as Record<View, string>)[view];
+  const pageTitle = ({ dashboard: "Assessment Overview", scorebook: "Assessment Record", exercise: "Continuous Assessment", administrator: "Administrator", teacher: "Teacher Dashboard", headteacher: "Headteacher Dashboard", resources: "Teaching Resources", schemes: "Scheme of Work", lessonNotes: "Lesson Notes", questions: "Questions", mockQuestions: "BECE Mock Questions", reports: "Performance Report", overall: "Combined Grade Performance", settings: "Assessment Settings" } as Record<View, string>)[view];
 
   return (
     <main className="app-shell">
@@ -671,17 +696,21 @@ export default function Home() {
 
         <div className="page-intro"><p className="eyebrow">Academic workspace</p><h1>{pageTitle}</h1>{view === "dashboard" && <p>Manage student records, scores and academic performance.</p>}</div>
 
-        {view !== "dashboard" && view !== "teacher" && view !== "headteacher" && view !== "resources" && view !== "schemes" && view !== "lessonNotes" && view !== "questions" && view !== "mockQuestions" && <div className="filter-panel"><div className="filter-panel-heading"><span>Current assessment</span><small>Choose the class, subject and term to update this workspace.</small></div><div className="filters">
+        {view !== "dashboard" && view !== "exercise" && view !== "teacher" && view !== "headteacher" && view !== "resources" && view !== "schemes" && view !== "lessonNotes" && view !== "questions" && view !== "mockQuestions" && <div className="filter-panel"><div className="filter-panel-heading"><span>Current assessment</span><small>Choose the class and subject. The term is controlled by school management.</small></div><div className="filters">
           <label><span>Class</span><select value={filter.className} onChange={(e) => setFilter({ ...filter, className: e.target.value })}>{SCHOOL_CLASSES.map((className) => <option key={className}>{className}</option>)}</select></label>
           <label><span>Subject</span><select value={filter.subject} onChange={(e) => setFilter({ ...filter, subject: e.target.value })}>{JHS_SUBJECTS.map((subject) => <option key={subject}>{subject}</option>)}</select></label>
-          <label><span>Term</span><select value={filter.term} onChange={(e) => setFilter({ ...filter, term: e.target.value })}><option>Term 1</option><option>Term 2</option><option>Term 3</option></select></label>
+          <label><span>Academic period</span><input value={`${academicYear} · ${filter.term}`} readOnly aria-label="Active academic year and term"/></label>
           {view === "overall" ? <button className="primary" onClick={() => void loadOverallPerformance()}><Icon name="chart" size={19}/>Refresh combined results</button> : view === "administrator" ? <span className="admin-filter-badge">🔒 Administrator controls</span> : <button className="primary" onClick={() => void openScoreEntry()} disabled={scoreEntryPending}><Icon name="edit" size={19}/>{scoreEntryPending ? "Checking access…" : "Enter scores"}</button>}
         </div></div>}
-        {view !== "dashboard" && view !== "teacher" && view !== "headteacher" && view !== "resources" && view !== "schemes" && view !== "lessonNotes" && view !== "questions" && view !== "mockQuestions" && <div className="selected-teacher"><span>Subject teacher</span><strong>{selectedTeacher || "Not assigned"}</strong><small>{filter.subject} · {filter.className}</small></div>}
+        {view !== "dashboard" && view !== "exercise" && view !== "teacher" && view !== "headteacher" && view !== "resources" && view !== "schemes" && view !== "lessonNotes" && view !== "questions" && view !== "mockQuestions" && <div className="selected-teacher"><span>Subject teacher</span><strong>{selectedTeacher || "Not assigned"}</strong><small>{filter.subject} · {filter.className}</small></div>}
 
         {message && <div className="toast" role="status">{message}<button onClick={() => setMessage("")} aria-label="Dismiss"><Icon name="close" size={16}/></button></div>}
 
         {view === "dashboard" && <section className="home-command-hero"><div className="home-command-copy"><p>Welcome to your academic workspace</p><h2>School Management Overview</h2><span>Monitor current performance, open teaching resources and move quickly between the school&apos;s assessment tools.</span><div><button className="primary" onClick={() => setView("scorebook")}><Icon name="book" size={18}/>Open Scorebook</button><button className="home-hero-secondary" onClick={() => setView("reports")}><Icon name="chart" size={18}/>View Reports</button></div></div><div className="home-crest"><img src="/school-logo.png" alt="1st November 1954 J.H.S. crest"/><span>1ST NOVEMBER 1954 J.H.S.</span><small>Lord, increase me in knowledge</small></div></section>}
+
+        {view === "dashboard" && <section className="level-overview" aria-label="JHS level overview">{GRADE_LEVELS.map((level) => <button key={level} onClick={() => { setFilter({ ...filter, className: `${level} Red` }); setView("scorebook"); }}><span><Icon name="users" size={22}/></span><div><strong>{level}</strong><small>Red and Blue streams · 10 subjects</small></div><em>Open level →</em></button>)}</section>}
+
+        {view === "exercise" && <Exercise academicYear={academicYear} term={filter.term} onMigrated={(className, subject) => setFilter((current) => ({ ...current, className, subject }))}/>}
 
         {(view === "scorebook" || view === "dashboard") && <>
           <section className="metrics">
@@ -717,7 +746,7 @@ export default function Home() {
         {view === "questions" && <><button className="resource-back" onClick={() => setView("resources")}>← Back to Resources</button><QuestionBank /></>}
         {view === "mockQuestions" && <><button className="resource-back" onClick={() => setView("resources")}>← Back to Resources</button><QuestionBank mockMode /></>}
         {view === "teacher" && <section className="teacher-workspace"><div className="teacher-workspace-hero"><span><Icon name="users" size={30}/></span><div><p className="eyebrow">Teacher workspace</p><h2>Prepare and submit weekly lesson notes</h2><p>Open Lesson Notes under Resources, load the correct subject, class and week, edit the content and submit it to the headteacher.</p><button className="primary" onClick={() => setView("lessonNotes")}><Icon name="file" size={18}/>Open Lesson Notes</button></div></div><div className="teacher-workflow"><article><b>1</b><span><strong>Prepare</strong><small>Load the weekly note from the Scheme of Work.</small></span></article><article><b>2</b><span><strong>Edit</strong><small>Verify curriculum codes and refine every lesson phase.</small></span></article><article><b>3</b><span><strong>Submit</strong><small>Send the completed note to the headteacher for vetting.</small></span></article></div></section>}
-        {view === "headteacher" && <HeadteacherDashboard><section className="headteacher-management"><div className="headteacher-management-head"><div><h2>School Management</h2><p>Manage the official student roster and subject-teacher assignments.</p></div><label>Class<select value={filter.className} onChange={(event) => setFilter({ ...filter, className: event.target.value })}>{SCHOOL_CLASSES.map((className) => <option key={className}>{className}</option>)}</select></label></div><div className="admin-section-tabs"><button className={headManagementSection === "students" ? "active" : ""} onClick={() => setHeadManagementSection("students")}><Icon name="users" size={19}/>Student List</button><button className={headManagementSection === "teachers" ? "active" : ""} onClick={() => setHeadManagementSection("teachers")}><Icon name="users" size={19}/>Subject Teachers</button></div>
+        {view === "headteacher" && <HeadteacherDashboard><section className="headteacher-management"><div className="headteacher-management-head"><div><h2>School Management</h2><p>Manage the official student roster and subject-teacher assignments.</p></div><label>Class<select value={filter.className} onChange={(event) => setFilter({ ...filter, className: event.target.value })}>{SCHOOL_CLASSES.map((className) => <option key={className}>{className}</option>)}</select></label></div><section className="panel academic-period-manager"><div><p className="eyebrow">Active academic period</p><h3>Select the academic year and term</h3><span>This selection applies to teachers, scores, reports and exercises.</span></div><label>Academic year<select value={academicYear} onChange={(event) => setAcademicYear(event.target.value)}>{ACADEMIC_YEARS.map((year) => <option key={year}>{year}</option>)}</select></label><label>Term<select value={filter.term} onChange={(event) => setFilter({ ...filter, term: event.target.value })}><option>Term 1</option><option>Term 2</option><option>Term 3</option></select></label><button className="primary" onClick={() => void saveAcademicPeriod(headteacherPassword)}>Apply period</button></section><div className="admin-section-tabs"><button className={headManagementSection === "students" ? "active" : ""} onClick={() => setHeadManagementSection("students")}><Icon name="users" size={19}/>Student List</button><button className={headManagementSection === "teachers" ? "active" : ""} onClick={() => setHeadManagementSection("teachers")}><Icon name="users" size={19}/>Subject Teachers</button></div>
           {headManagementSection === "students" && <><section className="panel roster-tools"><div className="panel-head"><div><h2>Add or upload students</h2><p>{filter.className} · The official roster shared by every subject teacher</p></div></div><div className="roster-actions"><form onSubmit={addRosterStudent}><label>Student name<input required value={rosterForm.name} onChange={(event) => setRosterForm({ name: event.target.value })} placeholder="Full name"/></label><label>Index number<input value="Generated automatically" readOnly aria-label="Index number generated automatically"/></label><button className="primary" type="submit"><Icon name="plus" size={18}/>Add to all subjects</button></form><div className="upload-box"><Icon name="download" size={28}/><strong>Upload student list</strong><span>Excel/CSV: Student names in column A. Index numbers are generated automatically.</span><label className="secondary">Choose Excel file<input type="file" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadRoster(file); }}/></label></div></div></section><section className="panel attendance-panel"><div className="panel-head"><div><h2>Official student list</h2><p>{filter.className} · Index numbers are assigned automatically in ascending order.</p></div></div><div className="table-scroll"><table><thead><tr><th>Index number</th><th>Student</th><th>Class</th><th>Action</th></tr></thead><tbody>{rosterLoading ? <tr><td colSpan={4} className="empty">Loading the official student list…</td></tr> : roster.length === 0 ? <tr><td colSpan={4} className="empty">No students have been added to {filter.className} yet.</td></tr> : roster.map((student, index) => <tr key={student.id}><td><strong>{student.studentCode}</strong></td><td><span className={`avatar small tone-${index % 5}`}>{initials(student.name)}</span><span><strong>{student.name}</strong></span></td><td>{student.className}</td><td><button className="danger-icon" onClick={() => void removeRosterStudent(student)} aria-label={`Remove ${student.name}`}><Icon name="trash" size={17}/></button></td></tr>)}</tbody></table></div><div className="attendance-save"><span>{roster.length} student{roster.length === 1 ? "" : "s"} in the official list</span><strong>Next index: {nextRosterIndex(roster)}</strong></div></section></>}
           {headManagementSection === "teachers" && <section className="teacher-admin-grid"><section className="panel teacher-assignment"><div className="panel-head"><div><h2>Assign subject teacher</h2><p>Select a class, subject and teacher from the official staff list.</p></div></div><form onSubmit={saveSubjectTeacher}><label>Class<select value={teacherForm.className} onChange={(event) => setTeacherForm({ ...teacherForm, className: event.target.value })}>{SCHOOL_CLASSES.map((className) => <option key={className}>{className}</option>)}</select></label><label>Subject<select value={teacherForm.subject} onChange={(event) => setTeacherForm({ ...teacherForm, subject: event.target.value })}>{JHS_SUBJECTS.map((subject) => <option key={subject}>{subject}</option>)}</select></label><label>Teacher name<select required value={teacherForm.teacherName} onChange={(event) => setTeacherForm({ ...teacherForm, teacherName: event.target.value })}><option value="">Select teacher</option>{schoolTeachers.map((teacher) => <option key={teacher} value={teacher}>{teacher}</option>)}</select></label><button className="primary" type="submit">Save teacher assignment</button></form></section><section className="panel teacher-directory"><div className="panel-head"><div><h2>Subject teacher directory</h2><p>{teacherAssignments.length} class–subject assignment{teacherAssignments.length === 1 ? "" : "s"} saved</p></div></div><div>{teacherAssignments.length === 0 ? <p className="empty-passwords">No subject teachers have been assigned yet.</p> : teacherAssignments.map((item) => <article key={`${item.className}-${item.subject}`}><span className="avatar small">{initials(item.teacherName)}</span><div><strong>{item.teacherName}</strong><small>{item.subject} · {item.className}</small></div></article>)}</div></section><section className="panel staff-directory-manager"><div className="panel-head"><div><h2>Manage teacher dropdown</h2><p>Add or remove teachers available for subject assignment.</p></div></div><form onSubmit={addSchoolTeacher}><label>Teacher&apos;s full name<input required value={newTeacherName} onChange={(event) => setNewTeacherName(event.target.value)} placeholder="Enter teacher's full name"/></label><button className="primary" type="submit"><Icon name="plus" size={18}/>Add teacher</button></form><div className="staff-directory-list">{schoolTeachers.length === 0 ? <p className="empty-passwords">No teachers are currently available.</p> : schoolTeachers.map((teacher) => <article key={teacher}><span className="avatar small">{initials(teacher)}</span><strong>{teacher}</strong><button type="button" className="danger-icon" onClick={() => void removeSchoolTeacher(teacher)} aria-label={`Remove ${teacher}`}><Icon name="trash" size={17}/></button></article>)}</div></section></section>}
         </section></HeadteacherDashboard>}
@@ -730,6 +759,7 @@ export default function Home() {
 
         {view === "administrator" && adminUnlocked && <section className="attendance-layout">
           <div className="attendance-banner"><div><p>Administrator only</p><h2>System Administration</h2><span>Manage teacher access passwords and Scheme of Work documents.</span></div><button className="secondary" onClick={() => { setAdminUnlocked(false); setAdminPassword(""); setAdminSection("passwords"); }}>Logout administrator</button></div>
+          <section className="panel academic-period-manager"><div><p className="eyebrow">Active academic period</p><h3>Select the academic year and term</h3><span>This selection applies to teachers, scores, reports and exercises.</span></div><label>Academic year<select value={academicYear} onChange={(event) => setAcademicYear(event.target.value)}>{ACADEMIC_YEARS.map((year) => <option key={year}>{year}</option>)}</select></label><label>Term<select value={filter.term} onChange={(event) => setFilter({ ...filter, term: event.target.value })}><option>Term 1</option><option>Term 2</option><option>Term 3</option></select></label><button className="primary" onClick={() => void saveAcademicPeriod(adminPassword)}>Apply period</button></section>
           <div className="admin-section-tabs"><button className={adminSection === "passwords" ? "active" : ""} onClick={() => setAdminSection("passwords")}>🔑 Password</button><button className={adminSection === "schemes" ? "active" : ""} onClick={() => setAdminSection("schemes")}><Icon name="book" size={19}/>Scheme of Work</button></div>
           {adminSection === "students" && <>
           <section className="panel roster-tools">

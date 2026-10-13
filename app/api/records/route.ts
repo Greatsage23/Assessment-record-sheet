@@ -1,6 +1,6 @@
 import { and, asc, eq, like } from "drizzle-orm";
 import { ensureDatabase, getDb } from "../../../db";
-import { appMeta, records, subjectPasswords } from "../../../db/schema";
+import { appMeta, records, studentRoster, subjectPasswords } from "../../../db/schema";
 
 type RecordInput = {
   id?: number;
@@ -9,6 +9,7 @@ type RecordInput = {
   className?: string;
   subject?: string;
   term?: string;
+  academicYear?: string;
   classScore?: number;
   examScore?: number;
   subjectPassword?: string;
@@ -38,6 +39,7 @@ function values(input: RecordInput) {
     className: input.className!.trim(),
     subject: input.subject!.trim(),
     term: input.term!.trim(),
+    academicYear: input.academicYear?.trim() || "2026/2027",
     classScore: input.classScore!,
     examScore: input.examScore!,
     updatedAt: new Date().toISOString(),
@@ -52,16 +54,21 @@ export async function GET(request: Request) {
     const gradeLevel = url.searchParams.get("gradeLevel");
     const subject = url.searchParams.get("subject") ?? "Mathematics";
     const term = url.searchParams.get("term") ?? "Term 1";
+    const academicYear = url.searchParams.get("academicYear") ?? "2026/2027";
     const allSubjects = url.searchParams.get("allSubjects") === "true";
     const db = await getDb();
+    if (!gradeLevel && !allSubjects) {
+      const roster = await db.select().from(studentRoster).where(eq(studentRoster.className, className));
+      if (roster.length) await db.insert(records).values(roster.map((student) => ({ studentCode: student.studentCode, name: student.name, className, subject, term, academicYear, classScore: 0, examScore: 0, updatedAt: new Date().toISOString() }))).onConflictDoNothing();
+    }
     const students = await db.select().from(records).where(
       gradeLevel
         ? allSubjects
-          ? and(like(records.className, `${gradeLevel} %`), eq(records.term, term))
-          : and(like(records.className, `${gradeLevel} %`), eq(records.subject, subject), eq(records.term, term))
+          ? and(like(records.className, `${gradeLevel} %`), eq(records.term, term), eq(records.academicYear, academicYear))
+          : and(like(records.className, `${gradeLevel} %`), eq(records.subject, subject), eq(records.term, term), eq(records.academicYear, academicYear))
         : allSubjects
-          ? and(eq(records.className, className), eq(records.term, term))
-          : and(eq(records.className, className), eq(records.subject, subject), eq(records.term, term))
+          ? and(eq(records.className, className), eq(records.term, term), eq(records.academicYear, academicYear))
+          : and(eq(records.className, className), eq(records.subject, subject), eq(records.term, term), eq(records.academicYear, academicYear))
     ).orderBy(asc(records.name));
     return Response.json({ students });
   } catch (error) {

@@ -12,11 +12,25 @@ export const records = pgTable("assessment_records", {
   className: text("class_name").notNull(),
   subject: text("subject").notNull(),
   term: text("term").notNull(),
+  academicYear: text("academic_year").notNull().default("2026/2027"),
   classScore: integer("class_score").notNull().default(0),
   examScore: integer("exam_score").notNull().default(0),
   ...timestamps(),
 }, (table) => [
-  uniqueIndex("record_student_assessment_idx").on(table.studentCode, table.className, table.subject, table.term),
+  uniqueIndex("record_student_assessment_idx").on(table.studentCode, table.className, table.subject, table.term, table.academicYear),
+]);
+
+export const continuousAssessments = pgTable("continuous_assessments", {
+  id: serial("id").primaryKey(),
+  studentCode: text("student_code").notNull(),
+  className: text("class_name").notNull(),
+  subject: text("subject").notNull(),
+  term: text("term").notNull(),
+  academicYear: text("academic_year").notNull(),
+  scores: text("scores").notNull().default("[]"),
+  ...timestamps(),
+}, (table) => [
+  uniqueIndex("continuous_assessment_scope_idx").on(table.studentCode, table.className, table.subject, table.term, table.academicYear),
 ]);
 
 export const appMeta = pgTable("app_meta", {
