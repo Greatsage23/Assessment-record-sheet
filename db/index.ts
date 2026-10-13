@@ -51,10 +51,26 @@ async function initializeDatabase() {
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
   )`;
-  await sql`CREATE UNIQUE INDEX IF NOT EXISTS record_student_assessment_idx
-    ON assessment_records (student_code, class_name, subject, term)`;
   await sql`ALTER TABLE assessment_records ADD COLUMN IF NOT EXISTS academic_year TEXT DEFAULT '2026/2027' NOT NULL`;
-  await sql`DROP INDEX IF EXISTS record_student_assessment_idx`;
+  await sql`DO $$
+    BEGIN
+      IF EXISTS (
+        SELECT 1 FROM pg_indexes
+        WHERE schemaname = current_schema()
+          AND indexname = 'record_student_assessment_idx'
+          AND indexdef NOT ILIKE '%academic_year%'
+      ) THEN
+        DROP INDEX record_student_assessment_idx;
+      END IF;
+    END $$`;
+  await sql`DELETE FROM assessment_records older
+    USING assessment_records newer
+    WHERE older.student_code = newer.student_code
+      AND older.class_name = newer.class_name
+      AND older.subject = newer.subject
+      AND older.term = newer.term
+      AND older.academic_year = newer.academic_year
+      AND (older.updated_at, older.id) < (newer.updated_at, newer.id)`;
   await sql`CREATE UNIQUE INDEX IF NOT EXISTS record_student_assessment_idx
     ON assessment_records (student_code, class_name, subject, term, academic_year)`;
   await sql`CREATE TABLE IF NOT EXISTS continuous_assessments (
