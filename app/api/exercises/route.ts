@@ -16,10 +16,19 @@ async function authorised(db: Awaited<ReturnType<typeof getDb>>, className: stri
   return Boolean(access && password && access.passwordHash === await hashPassword(password));
 }
 
-function cleanScores(scores: unknown) {
+function cleanScores(scores: unknown, clampExisting = false) {
   if (!Array.isArray(scores) || scores.length !== 12) return null;
   const values = scores.map(Number);
-  return values.every((score) => Number.isFinite(score) && score >= 0 && score <= 10) ? values : null;
+  const maximums = [10, 10, 10, 10, 5, 5, 5, 5, 5, 10, 10, 20];
+  if (!values.every((score) => Number.isFinite(score) && score >= 0)) return null;
+  return clampExisting ? values.map((score, index) => Math.min(score, maximums[index])) : values.every((score, index) => score <= maximums[index]) ? values : null;
+}
+
+function scoreOutOfThirty(scores: number[]) {
+  const exercises = scores.slice(0, 4).reduce((sum, score) => sum + score, 0);
+  const homework = [...scores.slice(4, 9)].sort((a, b) => b - a).slice(0, 4).reduce((sum, score) => sum + score, 0);
+  const tests = scores.slice(9, 12).reduce((sum, score) => sum + score, 0);
+  return Math.round((exercises + homework + tests) / 100 * 30);
 }
 
 export async function GET(request: Request) {
@@ -40,7 +49,7 @@ export async function GET(request: Request) {
     return Response.json({ students: roster.map((student) => {
       const item = byStudent.get(student.studentCode);
       let scores = Array(12).fill(0) as number[];
-      try { if (item) scores = cleanScores(JSON.parse(item.scores)) ?? scores; } catch { /* retain zero scores */ }
+      try { if (item) scores = cleanScores(JSON.parse(item.scores), true) ?? scores; } catch { /* retain zero scores */ }
       return { studentCode: student.studentCode, name: student.name, scores };
     }) });
   } catch (error) {
@@ -70,7 +79,7 @@ export async function POST(request: Request) {
         set: { scores: JSON.stringify(scores), updatedAt: new Date().toISOString() },
       });
       if (payload.action === "migrate") {
-        const classScore = Math.round(scores.reduce((sum, score) => sum + score, 0) / 120 * 30);
+        const classScore = scoreOutOfThirty(scores);
         await db.insert(records).values({ studentCode: row.studentCode, name, className, subject, term, academicYear, classScore, examScore: 0, updatedAt: new Date().toISOString() }).onConflictDoUpdate({
           target: [records.studentCode, records.className, records.subject, records.term, records.academicYear],
           set: { name, classScore, updatedAt: new Date().toISOString() },

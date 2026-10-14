@@ -1,6 +1,6 @@
 import { and, asc, eq } from "drizzle-orm";
 import { ensureDatabase, getDb } from "../../../db";
-import { attendance, continuousAssessments, records, studentRoster } from "../../../db/schema";
+import { attendance, continuousAssessments, examAssessments, records, studentRoster } from "../../../db/schema";
 import { OFFICIAL_ROSTER } from "../../official-roster";
 
 const ADMIN_PASSWORD = "administrator";
@@ -154,6 +154,7 @@ export async function DELETE(request: Request) {
     await db.delete(studentRoster).where(eq(studentRoster.id, student.id));
     await db.delete(records).where(and(eq(records.studentCode, student.studentCode), eq(records.className, student.className)));
     await db.delete(continuousAssessments).where(and(eq(continuousAssessments.studentCode, student.studentCode), eq(continuousAssessments.className, student.className)));
+    await db.delete(examAssessments).where(and(eq(examAssessments.studentCode, student.studentCode), eq(examAssessments.className, student.className)));
     await db.delete(attendance).where(and(eq(attendance.studentCode, student.studentCode), eq(attendance.className, student.className)));
     return Response.json({ ok: true });
   } catch (error) {

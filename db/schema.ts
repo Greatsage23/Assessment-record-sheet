@@ -33,6 +33,19 @@ export const continuousAssessments = pgTable("continuous_assessments", {
   uniqueIndex("continuous_assessment_scope_idx").on(table.studentCode, table.className, table.subject, table.term, table.academicYear),
 ]);
 
+export const examAssessments = pgTable("exam_assessments", {
+  id: serial("id").primaryKey(),
+  studentCode: text("student_code").notNull(),
+  className: text("class_name").notNull(),
+  subject: text("subject").notNull(),
+  term: text("term").notNull(),
+  academicYear: text("academic_year").notNull(),
+  rawScore: integer("raw_score").notNull().default(0),
+  ...timestamps(),
+}, (table) => [
+  uniqueIndex("exam_assessment_scope_idx").on(table.studentCode, table.className, table.subject, table.term, table.academicYear),
+]);
+
 export const appMeta = pgTable("app_meta", {
   key: text("key").primaryKey(),
   value: text("value").notNull(),

@@ -6,6 +6,7 @@ import QuestionBank from "./question-bank";
 import LessonNotes from "./lesson-notes";
 import HeadteacherDashboard from "./headteacher-dashboard";
 import Exercise from "./exercise";
+import Exam from "./exam";
 import { DEFAULT_SCHOOL_TEACHERS } from "./school-teachers";
 import "./resources.css";
 
@@ -22,7 +23,7 @@ type Student = {
 };
 type RosterStudent = { id: number; studentCode: string; name: string; className: string };
 
-type View = "dashboard" | "scorebook" | "exercise" | "administrator" | "teacher" | "headteacher" | "resources" | "schemes" | "lessonNotes" | "questions" | "mockQuestions" | "reports" | "overall" | "settings";
+type View = "dashboard" | "scorebook" | "exercise" | "exam" | "administrator" | "teacher" | "headteacher" | "resources" | "schemes" | "lessonNotes" | "questions" | "mockQuestions" | "reports" | "overall" | "settings";
 type AdminSection = "students" | "teachers" | "passwords" | "schemes";
 type ReportDetails = {
   academicYear: string;
@@ -62,6 +63,7 @@ const navItems: { id: View; label: string; icon: string }[] = [
   { id: "dashboard", label: "Dashboard", icon: "grid" },
   { id: "scorebook", label: "Scorebook", icon: "book" },
   { id: "exercise", label: "Exercise", icon: "edit" },
+  { id: "exam", label: "Exam", icon: "file" },
   { id: "administrator", label: "Administrator", icon: "settings" },
   { id: "teacher", label: "Teacher", icon: "users" },
   { id: "headteacher", label: "Headteacher", icon: "headteacher" },
@@ -668,7 +670,7 @@ export default function Home() {
     }
   }
 
-  const pageTitle = ({ dashboard: "Assessment Overview", scorebook: "Assessment Record", exercise: "Continuous Assessment", administrator: "Administrator", teacher: "Teacher Dashboard", headteacher: "Headteacher Dashboard", resources: "Teaching Resources", schemes: "Scheme of Work", lessonNotes: "Lesson Notes", questions: "Questions", mockQuestions: "BECE Mock Questions", reports: "Performance Report", overall: "Combined Grade Performance", settings: "Assessment Settings" } as Record<View, string>)[view];
+  const pageTitle = ({ dashboard: "Assessment Overview", scorebook: "Assessment Record", exercise: "Continuous Assessment", exam: "Examination Scores", administrator: "Administrator", teacher: "Teacher Dashboard", headteacher: "Headteacher Dashboard", resources: "Teaching Resources", schemes: "Scheme of Work", lessonNotes: "Lesson Notes", questions: "Questions", mockQuestions: "BECE Mock Questions", reports: "Performance Report", overall: "Combined Grade Performance", settings: "Assessment Settings" } as Record<View, string>)[view];
 
   return (
     <main className="app-shell">
@@ -696,13 +698,13 @@ export default function Home() {
 
         <div className="page-intro"><p className="eyebrow">Academic workspace</p><h1>{pageTitle}</h1>{view === "dashboard" && <p>Manage student records, scores and academic performance.</p>}</div>
 
-        {view !== "dashboard" && view !== "exercise" && view !== "teacher" && view !== "headteacher" && view !== "resources" && view !== "schemes" && view !== "lessonNotes" && view !== "questions" && view !== "mockQuestions" && <div className="filter-panel"><div className="filter-panel-heading"><span>Current assessment</span><small>Choose the class and subject. The term is controlled by school management.</small></div><div className="filters">
+        {view !== "dashboard" && view !== "exercise" && view !== "exam" && view !== "teacher" && view !== "headteacher" && view !== "resources" && view !== "schemes" && view !== "lessonNotes" && view !== "questions" && view !== "mockQuestions" && <div className="filter-panel"><div className="filter-panel-heading"><span>Current assessment</span><small>Choose the class and subject. The term is controlled by school management.</small></div><div className="filters">
           <label><span>Class</span><select value={filter.className} onChange={(e) => setFilter({ ...filter, className: e.target.value })}>{SCHOOL_CLASSES.map((className) => <option key={className}>{className}</option>)}</select></label>
           <label><span>Subject</span><select value={filter.subject} onChange={(e) => setFilter({ ...filter, subject: e.target.value })}>{JHS_SUBJECTS.map((subject) => <option key={subject}>{subject}</option>)}</select></label>
           <label><span>Academic period</span><input value={`${academicYear} · ${filter.term}`} readOnly aria-label="Active academic year and term"/></label>
           {view === "overall" ? <button className="primary" onClick={() => void loadOverallPerformance()}><Icon name="chart" size={19}/>Refresh combined results</button> : view === "administrator" ? <span className="admin-filter-badge">🔒 Administrator controls</span> : <button className="primary" onClick={() => void openScoreEntry()} disabled={scoreEntryPending}><Icon name="edit" size={19}/>{scoreEntryPending ? "Checking access…" : "Enter scores"}</button>}
         </div></div>}
-        {view !== "dashboard" && view !== "exercise" && view !== "teacher" && view !== "headteacher" && view !== "resources" && view !== "schemes" && view !== "lessonNotes" && view !== "questions" && view !== "mockQuestions" && <div className="selected-teacher"><span>Subject teacher</span><strong>{selectedTeacher || "Not assigned"}</strong><small>{filter.subject} · {filter.className}</small></div>}
+        {view !== "dashboard" && view !== "exercise" && view !== "exam" && view !== "teacher" && view !== "headteacher" && view !== "resources" && view !== "schemes" && view !== "lessonNotes" && view !== "questions" && view !== "mockQuestions" && <div className="selected-teacher"><span>Subject teacher</span><strong>{selectedTeacher || "Not assigned"}</strong><small>{filter.subject} · {filter.className}</small></div>}
 
         {message && <div className="toast" role="status">{message}<button onClick={() => setMessage("")} aria-label="Dismiss"><Icon name="close" size={16}/></button></div>}
 
@@ -711,6 +713,7 @@ export default function Home() {
         {view === "dashboard" && <section className="level-overview" aria-label="JHS level overview">{GRADE_LEVELS.map((level) => <button key={level} onClick={() => { setFilter({ ...filter, className: `${level} Red` }); setView("scorebook"); }}><span><Icon name="users" size={22}/></span><div><strong>{level}</strong><small>Red and Blue streams · 10 subjects</small></div><em>Open level →</em></button>)}</section>}
 
         {view === "exercise" && <Exercise academicYear={academicYear} term={filter.term} onMigrated={(className, subject) => setFilter((current) => ({ ...current, className, subject }))}/>}
+        {view === "exam" && <Exam academicYear={academicYear} term={filter.term} onMigrated={(className, subject) => setFilter((current) => ({ ...current, className, subject }))}/>}
 
         {(view === "scorebook" || view === "dashboard") && <>
           <section className="metrics">
