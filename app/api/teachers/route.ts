@@ -33,10 +33,20 @@ export async function GET(request: Request) {
   try {
     await ensureDatabase();
     const url = new URL(request.url);
+    const mode = url.searchParams.get("mode");
+    const db = await getDb();
+    if (mode === "portal") {
+      const teacherName = url.searchParams.get("teacherName")?.trim();
+      const teachers = await readTeacherDirectory(db);
+      const assignments = teacherName
+        ? await db.select().from(subjectTeachers).where(eq(subjectTeachers.teacherName, teacherName)).orderBy(asc(subjectTeachers.className), asc(subjectTeachers.subject))
+        : [];
+      const [setting] = await db.select().from(appMeta).where(eq(appMeta.key, "subject_authentication")).limit(1);
+      return Response.json({ teachers, assignments, authenticationOn: setting?.value === "on" });
+    }
     const className = url.searchParams.get("className")?.trim();
     const subject = url.searchParams.get("subject")?.trim();
     if (!className || !subject) return Response.json({ error: "Class and subject are required." }, { status: 400 });
-    const db = await getDb();
     const [assignment] = await db.select().from(subjectTeachers).where(and(
       eq(subjectTeachers.className, className),
       eq(subjectTeachers.subject, subject),
