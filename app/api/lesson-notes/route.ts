@@ -42,13 +42,33 @@ export async function PATCH(request: Request) {
   try {
     if (!authorised(request)) return Response.json({ error: "Incorrect headteacher password." }, { status: 401 });
     await ensureDatabase();
-    const payload = await request.json() as { id?: number; status?: string; comment?: string };
+    const payload = await request.json() as { id?: number; status?: string; comment?: string; reviewDate?: string };
     if (!Number.isInteger(payload.id) || !payload.status || !VALID_STATUSES.has(payload.status)) return Response.json({ error: "Select a valid review action." }, { status: 400 });
+    const reviewDate = payload.reviewDate?.trim();
+    if (payload.status === "Approved" && !/^\d{4}-\d{2}-\d{2}$/.test(reviewDate ?? "")) return Response.json({ error: "Select the date the lesson note was vetted." }, { status: 400 });
+    const reviewedAt = reviewDate ? new Date(`${reviewDate}T12:00:00.000Z`).toISOString() : new Date().toISOString();
     const db = await getDb();
-    const [note] = await db.update(lessonNoteSubmissions).set({ status: payload.status, headteacherComment: payload.comment?.trim() ?? "", reviewedAt: new Date().toISOString(), updatedAt: new Date().toISOString() }).where(eq(lessonNoteSubmissions.id, payload.id!)).returning();
+    const [note] = await db.update(lessonNoteSubmissions).set({ status: payload.status, headteacherComment: payload.comment?.trim() ?? "", reviewedAt, updatedAt: new Date().toISOString() }).where(eq(lessonNoteSubmissions.id, payload.id!)).returning();
     if (!note) return Response.json({ error: "Lesson note not found." }, { status: 404 });
     return Response.json({ note });
   } catch (error) {
     return Response.json({ error: error instanceof Error ? error.message : "Unable to review the lesson note." }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    if (!authorised(request)) return Response.json({ error: "Incorrect headteacher password. The approved lesson note was not deleted." }, { status: 401 });
+    await ensureDatabase();
+    const payload = await request.json() as { id?: number };
+    if (!Number.isInteger(payload.id)) return Response.json({ error: "Select a valid approved lesson note." }, { status: 400 });
+    const db = await getDb();
+    const [existing] = await db.select().from(lessonNoteSubmissions).where(eq(lessonNoteSubmissions.id, payload.id!)).limit(1);
+    if (!existing) return Response.json({ error: "Lesson note not found." }, { status: 404 });
+    if (existing.status !== "Approved") return Response.json({ error: "Only approved lesson notes can be deleted from the repository." }, { status: 400 });
+    await db.delete(lessonNoteSubmissions).where(eq(lessonNoteSubmissions.id, payload.id!));
+    return Response.json({ success: true });
+  } catch (error) {
+    return Response.json({ error: error instanceof Error ? error.message : "Unable to delete the approved lesson note." }, { status: 500 });
   }
 }
