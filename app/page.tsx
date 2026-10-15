@@ -6,6 +6,7 @@ import QuestionBank from "./question-bank";
 import LessonNotes from "./lesson-notes";
 import HeadteacherDashboard from "./headteacher-dashboard";
 import TeacherPortal from "./teacher-portal";
+import SchoolWebsite from "./school-website";
 import { DEFAULT_SCHOOL_TEACHERS } from "./school-teachers";
 import "./resources.css";
 
@@ -22,7 +23,7 @@ type Student = {
 };
 type RosterStudent = { id: number; studentCode: string; name: string; className: string };
 
-type View = "dashboard" | "scorebook" | "administrator" | "teacher" | "headteacher" | "resources" | "schemes" | "lessonNotes" | "questions" | "mockQuestions" | "reports" | "overall" | "settings";
+type View = "website" | "dashboard" | "scorebook" | "administrator" | "teacher" | "headteacher" | "resources" | "schemes" | "lessonNotes" | "questions" | "mockQuestions" | "reports" | "overall" | "settings";
 type AdminSection = "students" | "teachers" | "passwords" | "schemes";
 type ReportDetails = {
   academicYear: string;
@@ -59,6 +60,7 @@ const GRADE_LEVELS = ["Basic 7", "Basic 8", "Basic 9"] as const;
 const ACADEMIC_YEARS = Array.from({ length: 10 }, (_, index) => `${2026 + index}/${2027 + index}`);
 
 const navItems: { id: View; label: string; icon: string }[] = [
+  { id: "website", label: "School Website", icon: "globe" },
   { id: "dashboard", label: "Dashboard", icon: "grid" },
   { id: "scorebook", label: "Scorebook", icon: "book" },
   { id: "administrator", label: "Administrator", icon: "settings" },
@@ -90,6 +92,7 @@ function Icon({ name, size = 22 }: { name: string; size?: number }) {
     trophy: <><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0z"/><path d="M7 6H4v2a4 4 0 0 0 4 4M17 6h3v2a4 4 0 0 1-4 4"/></>,
     alert: <><path d="M10.3 2.9 1.8 17a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 2.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></>,
     question: <><path d="M9.1 9a3 3 0 1 1 5.2 2c-1.2 1.2-2.3 1.7-2.3 3"/><path d="M12 18h.01"/><circle cx="12" cy="12" r="9"/></>,
+    globe: <><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></>,
   };
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg>;
 }
@@ -146,7 +149,7 @@ function nextRosterIndex(roster: RosterStudent[]) {
 
 export default function Home() {
   const [students, setStudents] = useState<Student[]>([]);
-  const [view, setView] = useState<View>("dashboard");
+  const [view, setView] = useState<View>("website");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
@@ -667,7 +670,9 @@ export default function Home() {
     }
   }
 
-  const pageTitle = ({ dashboard: "Assessment Overview", scorebook: "Assessment Record", administrator: "Administrator", teacher: "Teacher Dashboard", headteacher: "Headteacher Dashboard", resources: "Teaching Resources", schemes: "Scheme of Work", lessonNotes: "Lesson Notes", questions: "Questions", mockQuestions: "BECE Mock Questions", reports: "Performance Report", overall: "Combined Grade Performance", settings: "Assessment Settings" } as Record<View, string>)[view];
+  if (view === "website") return <SchoolWebsite onOpenPortal={(portal) => setView(portal)} />;
+
+  const pageTitle = ({ website: "School Website", dashboard: "Assessment Overview", scorebook: "Assessment Record", administrator: "Administrator", teacher: "Teacher Dashboard", headteacher: "Headteacher Dashboard", resources: "Teaching Resources", schemes: "Scheme of Work", lessonNotes: "Lesson Notes", questions: "Questions", mockQuestions: "BECE Mock Questions", reports: "Performance Report", overall: "Combined Grade Performance", settings: "Assessment Settings" } as Record<View, string>)[view];
 
   return (
     <main className="app-shell">

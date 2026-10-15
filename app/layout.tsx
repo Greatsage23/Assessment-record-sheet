@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "1st November 1954 J.H.S. | Assessment Record Management System",
-  description: "Manage student records, assessment scores and academic performance for 1st November 1954 J.H.S.",
+  title: "1st November 1954 Junior High School | Gurugu, Tamale",
+  description: "Official website and assessment portal for 1st November 1954 Junior High School in Gurugu, Tamale, Northern Region, Ghana.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
