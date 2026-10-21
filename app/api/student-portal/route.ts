@@ -3,6 +3,8 @@ import { ensureDatabase, getDb, getSql } from "../../../db";
 import { appMeta, records, studentRoster } from "../../../db/schema";
 
 const DEFAULT_STUDENT_PASSWORD = "0000";
+// The administrator password is stored as a one-way SHA-256 digest, never as plain text.
+const ADMIN_PASSWORD_HASH = process.env.STUDENT_PORTAL_ADMIN_PASSWORD_HASH || "P22UVNcafp5ettV97fk1G3byqEf8ZlTXnkz_1_jBaRM";
 const COOKIE_NAME = "student_portal_session";
 const SESSION_SECONDS = 8 * 60 * 60;
 const VALID_CLASSES = new Set(["Basic 7 Red", "Basic 7 Blue", "Basic 8 Red", "Basic 8 Blue", "Basic 9 Red", "Basic 9 Blue"]);
@@ -19,8 +21,10 @@ async function sessionSignature(payload: string) {
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   return bytesToBase64Url(new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload))));
 }
-async function createSession(className: string, studentCode: string) {
-  const payload = bytesToBase64Url(new TextEncoder().encode(JSON.stringify({ className, studentCode, exp: Date.now() + SESSION_SECONDS * 1000 })));
+type PortalRole = "student" | "administrator";
+
+async function createSession(className: string, studentCode: string, role: PortalRole = "student") {
+  const payload = bytesToBase64Url(new TextEncoder().encode(JSON.stringify({ className, studentCode, role, exp: Date.now() + SESSION_SECONDS * 1000 })));
   return `${payload}.${await sessionSignature(payload)}`;
 }
 async function readSession(request: Request) {
@@ -30,8 +34,9 @@ async function readSession(request: Request) {
   if (!payload || !signature || signature !== await sessionSignature(payload)) return null;
   try {
     const normalized = payload.replaceAll("-", "+").replaceAll("_", "/");
-    const data = JSON.parse(atob(normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "="))) as { className: string; studentCode: string; exp: number };
-    return data.exp > Date.now() && VALID_CLASSES.has(data.className) && data.studentCode ? data : null;
+    const data = JSON.parse(atob(normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "="))) as { className: string; studentCode: string; role?: PortalRole; exp: number };
+    const role = data.role === "administrator" ? "administrator" : "student";
+    return data.exp > Date.now() && VALID_CLASSES.has(data.className) && data.studentCode ? { ...data, role } : null;
   } catch { return null; }
 }
 function sessionCookie(token: string) { return `${COOKIE_NAME}=${token}; Path=/; HttpOnly; SameSite=Strict; Secure; Max-Age=${SESSION_SECONDS}`; }
@@ -61,6 +66,11 @@ export async function POST(request: Request) {
     const db = await getDb();
     const [student] = await db.select().from(studentRoster).where(and(eq(studentRoster.className, className), eq(studentRoster.studentCode, studentCode))).limit(1);
     if (!student) return Response.json({ error: "No student was found with that class and index number." }, { status: 404 });
+    if (await digest(payload.password ?? "") === ADMIN_PASSWORD_HASH) {
+      const token = await createSession(className, studentCode, "administrator");
+      const data = await dashboard(className, studentCode);
+      return Response.json(data ? { ...data, administratorAccess: true } : data, { headers: { "Set-Cookie": sessionCookie(token) } });
+    }
     const sql = await getSql();
     let accounts = await sql`SELECT * FROM student_portal_accounts WHERE student_code = ${studentCode} AND class_name = ${className} LIMIT 1`;
     if (!accounts.length) {
@@ -89,6 +99,7 @@ export async function PATCH(request: Request) {
     await ensureDatabase();
     const session = await readSession(request);
     if (!session) return Response.json({ error: "Your student session has expired. Please sign in again." }, { status: 401 });
+    if (session.role === "administrator") return Response.json({ error: "Administrator access cannot change a student's password." }, { status: 403 });
     const payload = await request.json() as { newPassword?: string; confirmPassword?: string };
     if (!payload.newPassword || payload.newPassword.length < 6) return Response.json({ error: "Create a private password containing at least 6 characters." }, { status: 400 });
     if (payload.newPassword === DEFAULT_STUDENT_PASSWORD) return Response.json({ error: "Choose a password different from the default password." }, { status: 400 });
@@ -106,6 +117,10 @@ export async function GET(request: Request) {
     await ensureDatabase();
     const session = await readSession(request);
     if (!session) return Response.json({ error: "Please sign in to open the Student Portal." }, { status: 401 });
+    if (session.role === "administrator") {
+      const data = await dashboard(session.className, session.studentCode);
+      return Response.json(data ? { ...data, administratorAccess: true } : data);
+    }
     const sql = await getSql();
     const accounts = await sql`SELECT must_change_password FROM student_portal_accounts WHERE student_code = ${session.studentCode} AND class_name = ${session.className} LIMIT 1`;
     if (!accounts.length || accounts[0].must_change_password) return Response.json({ error: "Create your private password to continue.", requiresPasswordChange: true }, { status: 403 });
