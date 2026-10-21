@@ -5,6 +5,13 @@ import "./school-website.css";
 
 type Portal = "teacher" | "headteacher" | "administrator" | "dashboard";
 type Page = "home" | "about" | "administration" | "academics" | "students" | "staff" | "news" | "gallery" | "resources" | "contact";
+type StudentPortalData = {
+  student: { studentCode: string; name: string; className: string };
+  activePeriod: { academicYear: string; term: string };
+  results: Array<{ id: number; subject: string; term: string; academicYear: string; classScore: number; examScore: number; total: number }>;
+  materials: Array<{ id: number; title: string; subject: string; level: string; term: string; academicYear: string; fileName: string; fileType: string; updatedAt: string }>;
+  assignments: unknown[]; announcements: unknown[]; calendar: unknown[];
+};
 
 const NAV: Array<{ id: Page; label: string }> = [
   { id: "home", label: "Home" }, { id: "about", label: "About Us" }, { id: "administration", label: "Administration" },
@@ -19,6 +26,10 @@ const SLIDES = [
 ];
 
 const SUBJECTS = ["English Language", "Mathematics", "Science", "Social Studies", "Computing", "Religious and Moral Education", "Creative Arts and Design", "Career Technology", "Ghanaian Language", "French"];
+const SCHOOL_CLASSES = ["Basic 7 Red", "Basic 7 Blue", "Basic 8 Red", "Basic 8 Blue", "Basic 9 Red", "Basic 9 Blue"];
+
+function gradeFor(total: number) { return total >= 80 ? "A" : total >= 70 ? "B" : total >= 60 ? "C" : total >= 50 ? "D" : "F"; }
+function safe(value: unknown) { return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;"); }
 
 function Mark({ name }: { name: string }) {
   const icons: Record<string, ReactNode> = {
@@ -47,16 +58,52 @@ export default function SchoolWebsite({ onOpenPortal }: { onOpenPortal: (portal:
   const [menuOpen, setMenuOpen] = useState(false);
   const [studentLogin, setStudentLogin] = useState(false);
   const [studentMessage, setStudentMessage] = useState("");
+  const [studentLoading, setStudentLoading] = useState(false);
+  const [studentPortal, setStudentPortal] = useState<StudentPortalData | null>(null);
+  const [studentMustChangePassword, setStudentMustChangePassword] = useState(false);
   const [contactMessage, setContactMessage] = useState("");
 
   useEffect(() => { if (page !== "home") return; const timer = window.setInterval(() => setSlide((current) => (current + 1) % SLIDES.length), 6500); return () => window.clearInterval(timer); }, [page]);
   function open(next: Page) { setPage(next); setMenuOpen(false); window.scrollTo({ top: 0, behavior: "smooth" }); }
-  function studentSubmit(event: FormEvent<HTMLFormElement>) {
+  async function studentSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    if (String(data.get("password") ?? "") !== "0000") return setStudentMessage("Incorrect password. Please enter the default student password or contact school administration.");
-    setStudentMessage("Login successful. Opening the Student Portal…");
-    window.setTimeout(() => { setStudentLogin(false); setStudentMessage(""); open("students"); }, 700);
+    setStudentLoading(true); setStudentMessage("");
+    try {
+      const response = await fetch("/api/student-portal", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ className: data.get("className"), studentCode: data.get("studentCode"), password: data.get("password") }) });
+      const result = await response.json() as Partial<StudentPortalData> & { error?: string; requiresPasswordChange?: boolean };
+      if (!response.ok) throw new Error(result.error || "Unable to open the Student Portal.");
+      if (result.requiresPasswordChange) { setStudentMustChangePassword(true); setStudentMessage("For your privacy, create a personal password before continuing."); return; }
+      setStudentPortal(result as StudentPortalData); setStudentLogin(false); setStudentMessage(""); open("students");
+    } catch (error) { setStudentMessage(error instanceof Error ? error.message : "Unable to open the Student Portal."); }
+    finally { setStudentLoading(false); }
+  }
+  async function changeStudentPassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    setStudentLoading(true); setStudentMessage("");
+    try {
+      const response = await fetch("/api/student-portal", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ newPassword: data.get("newPassword"), confirmPassword: data.get("confirmPassword") }) });
+      const result = await response.json() as StudentPortalData & { error?: string };
+      if (!response.ok) throw new Error(result.error || "Unable to create your private password.");
+      setStudentPortal(result); setStudentMustChangePassword(false); setStudentLogin(false); open("students");
+    } catch (error) { setStudentMessage(error instanceof Error ? error.message : "Unable to create your private password."); }
+    finally { setStudentLoading(false); }
+  }
+  async function logoutStudent() {
+    await fetch("/api/student-portal", { method: "DELETE" }).catch(() => undefined);
+    setStudentPortal(null); setStudentMustChangePassword(false); open("students");
+  }
+  function printReportCard() {
+    if (!studentPortal) return;
+    const { student, activePeriod, results } = studentPortal;
+    const current = results.filter((result) => result.academicYear === activePeriod.academicYear && result.term === activePeriod.term);
+    const average = current.length ? Math.round(current.reduce((sum, result) => sum + result.total, 0) / current.length) : 0;
+    const rows = current.map((result) => `<tr><td>${safe(result.subject)}</td><td>${result.classScore}</td><td>${result.examScore}</td><td><b>${result.total}</b></td><td>${gradeFor(result.total)}</td></tr>`).join("");
+    const popup = window.open("", "_blank");
+    if (!popup) return;
+    popup.document.write(`<!doctype html><html><head><title>${safe(student.name)} Report Card</title><style>@page{size:A4;margin:16mm}body{font-family:Arial;color:#17233a}header{text-align:center;border-bottom:3px solid #08275b;padding-bottom:12px}header img{width:82px;height:82px;object-fit:contain}h1{margin:4px;font-size:20px;color:#08275b}.meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:18px 0;padding:12px;background:#f4f6fa}table{width:100%;border-collapse:collapse}th,td{padding:9px;border:1px solid #aeb9c9;text-align:center}th{color:#fff;background:#08275b}.summary{margin-top:15px;padding:12px;border-left:4px solid #f5b400;background:#fff8dd}.notice{margin-top:22px;color:#667085;font-size:11px}</style></head><body><header><img src="${window.location.origin}/school-logo.png"><h1>1ST NOVEMBER 1954 JUNIOR HIGH SCHOOL</h1><div>STUDENT REPORT CARD</div></header><div class="meta"><span><b>Student:</b> ${safe(student.name)}</span><span><b>Index:</b> ${safe(student.studentCode)}</span><span><b>Class:</b> ${safe(student.className)}</span><span><b>Period:</b> ${safe(activePeriod.academicYear)} · ${safe(activePeriod.term)}</span></div>${current.length ? `<table><thead><tr><th>Subject</th><th>Class /30</th><th>Exam /70</th><th>Total /100</th><th>Grade</th></tr></thead><tbody>${rows}</tbody></table><div class="summary"><b>Overall average:</b> ${average}%</div>` : `<div class="summary">No assessment result has been published for the active period.</div>`}<p class="notice">Generated from the school assessment system on ${new Date().toLocaleDateString()}.</p><script>window.onload=()=>window.print()</script></body></html>`);
+    popup.document.close();
   }
   function contactSubmit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); event.currentTarget.reset(); setContactMessage("Your message has been prepared. The school must configure an official receiving email before online delivery is enabled."); }
 
@@ -80,7 +127,8 @@ export default function SchoolWebsite({ onOpenPortal }: { onOpenPortal: (portal:
 
     {page === "administration" && <section className="school-inner"><SectionTitle eyebrow="School management" title="Secure administration and academic oversight" text="Authorised staff can manage assessment records and school operations through protected dashboards."/><div className="portal-grid"><button onClick={() => onOpenPortal("headteacher")}><Mark name="shield"/><h3>Headteacher Dashboard</h3><p>Manage students, teacher assignments and lesson-note approval.</p><span>Open secure dashboard →</span></button><button onClick={() => onOpenPortal("administrator")}><Mark name="laptop"/><h3>Administrator Dashboard</h3><p>Control access, authentication and approved academic documents.</p><span>Administrator login →</span></button><button onClick={() => onOpenPortal("dashboard")}><Mark name="award"/><h3>Assessment System</h3><p>Open the school’s assessment-record management workspace.</p><span>Open assessment system →</span></button></div><div className="security-note-public"><Mark name="shield"/><div><h3>Protected school information</h3><p>Student records and academic information remain inside the authenticated assessment system. Public pages do not expose private learner data.</p></div></div></section>}
 
-    {page === "students" && <section className="school-inner"><SectionTitle eyebrow="Learner services" title="Student information and access" text="Approved resources, assignments, calendars and published results will be available through secure student accounts."/><div className="student-feature"><div><h3>Student Portal</h3><p>Students will use their assigned credentials to access authorised learning information. Accounts must first be issued by school administration.</p><button onClick={() => setStudentLogin(true)}>Open Student Login</button></div><ul><li>Approved learning materials</li><li>Assignments and announcements</li><li>Academic calendar</li><li>Published assessment results</li></ul></div></section>}
+    {page === "students" && !studentPortal && <section className="school-inner"><SectionTitle eyebrow="Learner services" title="Student information and access" text="Approved resources, assignments, calendars and published results are available through secure student accounts."/><div className="student-feature"><div><h3>Student Portal</h3><p>Select your class and enter your official index number with the default password to open your personal dashboard.</p><button onClick={() => setStudentLogin(true)}>Open Student Login</button></div><ul><li>Personal report cards</li><li>Approved learning materials</li><li>Assignments and announcements</li><li>Academic calendar</li><li>Published assessment results</li></ul></div></section>}
+    {page === "students" && studentPortal && <section className="student-dashboard"><div className="student-dashboard-hero"><div><span>Student Portal</span><h1>Welcome, {studentPortal.student.name}</h1><p>{studentPortal.student.className} · Index {studentPortal.student.studentCode} · {studentPortal.activePeriod.academicYear} {studentPortal.activePeriod.term}</p></div><div><button onClick={printReportCard}>Print Report Card</button><button onClick={() => void logoutStudent()}>Log out</button></div></div><div className="student-dashboard-stats"><article><strong>{studentPortal.results.length}</strong><span>Published subject results</span></article><article><strong>{studentPortal.materials.length}</strong><span>Approved learning materials</span></article><article><strong>{studentPortal.assignments.length}</strong><span>Current assignments</span></article><article><strong>{studentPortal.announcements.length}</strong><span>Announcements</span></article></div><section className="student-portal-panel"><div className="student-panel-title"><div><span>Assessment</span><h2>Published Results</h2></div><button onClick={printReportCard}>View printable report card</button></div>{studentPortal.results.length === 0 ? <div className="student-empty"><Mark name="award"/><strong>No results published yet</strong><p>Recorded results will appear here after they have been entered by the responsible subject teachers.</p></div> : <div className="student-results-table"><table><thead><tr><th>Academic year</th><th>Term</th><th>Subject</th><th>Class /30</th><th>Exam /70</th><th>Total /100</th><th>Grade</th></tr></thead><tbody>{studentPortal.results.map((result) => <tr key={result.id}><td>{result.academicYear}</td><td>{result.term}</td><td><strong>{result.subject}</strong></td><td>{result.classScore}</td><td>{result.examScore}</td><td><b>{result.total}</b></td><td><span className={`student-grade grade-${gradeFor(result.total).toLowerCase()}`}>{gradeFor(result.total)}</span></td></tr>)}</tbody></table></div>}</section><div className="student-dashboard-columns"><section className="student-portal-panel"><div className="student-panel-title"><div><span>Learning</span><h2>Approved Materials</h2></div></div>{studentPortal.materials.length === 0 ? <div className="student-empty compact"><Mark name="book"/><strong>No material available</strong><p>Approved learning materials for your level will appear here.</p></div> : <div className="student-material-list">{studentPortal.materials.map((material) => <a key={material.id} href={`/api/schemes/${material.id}/file`} target="_blank" rel="noopener noreferrer"><Mark name="book"/><span><strong>{material.title}</strong><small>{material.subject} · {material.term} · {material.fileType}</small></span><em>Download</em></a>)}</div>}</section><section className="student-portal-panel"><div className="student-panel-title"><div><span>Classroom</span><h2>Assignments</h2></div></div><div className="student-empty compact"><Mark name="book"/><strong>No assignment published</strong><p>New assignments will appear here when teachers publish them.</p></div></section><section className="student-portal-panel"><div className="student-panel-title"><div><span>Updates</span><h2>Announcements</h2></div></div><div className="student-empty compact"><Mark name="calendar"/><strong>No announcement published</strong><p>School and class announcements will appear here.</p></div></section><section className="student-portal-panel"><div className="student-panel-title"><div><span>Schedule</span><h2>Academic Calendar</h2></div></div><div className="student-empty compact"><Mark name="calendar"/><strong>No calendar item published</strong><p>Approved academic dates and activities will appear here.</p></div></section></div></section>}
 
     {page === "staff" && <section className="school-inner"><SectionTitle eyebrow="Our educators" title="Staff Directory" text="Only staff profiles authorised for public display will be published."/><div className="staff-empty"><Mark name="users"/><h3>Staff profiles awaiting authorisation</h3><p>No staff photographs, names or designations have been approved for public publication. Subject-teacher assignments remain protected inside the Headteacher dashboard.</p><button onClick={() => onOpenPortal("teacher")}>Teacher Login</button></div></section>}
 
@@ -94,6 +142,6 @@ export default function SchoolWebsite({ onOpenPortal }: { onOpenPortal: (portal:
 
     <footer className="school-footer"><div className="footer-brand"><img src="/school-logo.png" alt="School crest"/><div><strong>1st November 1954 Junior High School</strong><span>Gurugu, Tamale, Northern Region, Ghana</span><em>Lord increase me in knowledge.</em></div></div><div><h3>Explore</h3>{NAV.slice(0,5).map((item) => <button key={item.id} onClick={() => open(item.id)}>{item.label}</button>)}</div><div><h3>School Access</h3><button onClick={() => setStudentLogin(true)}>Student Portal</button><button onClick={() => onOpenPortal("teacher")}>Teacher Portal</button><button onClick={() => onOpenPortal("administrator")}>Administration</button></div><div><h3>Contact</h3><span>Gurugu, Tamale</span><span>+233244138609</span><span>P.O. Box 184 E/R</span></div><small>© {new Date().getFullYear()} 1st November 1954 Junior High School. Official information is subject to verification by school administration.</small></footer>
 
-    {studentLogin && <div className="school-modal" role="dialog" aria-modal="true" aria-label="Student portal login"><form onSubmit={studentSubmit}><button type="button" className="modal-close" onClick={() => { setStudentLogin(false); setStudentMessage(""); }}>×</button><img src="/school-logo.png" alt=""/><span>Secure learner access</span><h2>Student Portal</h2><p>Enter your student index number. The default password is 0000.</p><label>Student index number<input name="studentCode" required placeholder="Enter index number"/></label><label>Password<input name="password" type="password" required inputMode="numeric" placeholder="Enter password"/></label><button className="student-submit">Sign in securely</button>{studentMessage && <div role="status">{studentMessage}</div>}</form></div>}
+    {studentLogin && <div className="school-modal" role="dialog" aria-modal="true" aria-label="Student portal login">{studentMustChangePassword ? <form onSubmit={changeStudentPassword}><button type="button" className="modal-close" onClick={() => { setStudentLogin(false); setStudentMustChangePassword(false); setStudentMessage(""); }}>×</button><img src="/school-logo.png" alt=""/><span>Protect your account</span><h2>Create Private Password</h2><p>The default password works only for first-time access. Create a password containing at least 6 characters.</p><label>New password<input name="newPassword" type="password" required minLength={6} autoComplete="new-password"/></label><label>Confirm new password<input name="confirmPassword" type="password" required minLength={6} autoComplete="new-password"/></label><button className="student-submit" disabled={studentLoading}>{studentLoading ? "Securing account…" : "Save password and continue"}</button>{studentMessage && <div role="status">{studentMessage}</div>}</form> : <form onSubmit={studentSubmit}><button type="button" className="modal-close" onClick={() => { setStudentLogin(false); setStudentMessage(""); }}>×</button><img src="/school-logo.png" alt=""/><span>Secure learner access</span><h2>Student Portal</h2><p>Select your class and enter your official index number. First-time users enter the default password 0000.</p><label>Class<select name="className" required defaultValue="Basic 7 Red">{SCHOOL_CLASSES.map((className) => <option key={className}>{className}</option>)}</select></label><label>Student index number<input name="studentCode" required autoComplete="username" placeholder="Example: 001"/></label><label>Password<input name="password" type="password" required autoComplete="current-password" placeholder="Enter password"/></label><button className="student-submit" disabled={studentLoading}>{studentLoading ? "Checking account…" : "Sign in securely"}</button>{studentMessage && <div role="status">{studentMessage}</div>}</form>}</div>}
   </main>;
 }

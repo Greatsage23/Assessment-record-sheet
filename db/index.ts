@@ -113,6 +113,19 @@ async function initializeDatabase() {
   )`;
   await sql`CREATE UNIQUE INDEX IF NOT EXISTS roster_student_class_idx
     ON student_roster (student_code, class_name)`;
+  await sql`CREATE TABLE IF NOT EXISTS student_portal_accounts (
+    id SERIAL PRIMARY KEY,
+    student_code TEXT NOT NULL,
+    class_name TEXT NOT NULL,
+    password_hash TEXT NOT NULL,
+    password_salt TEXT NOT NULL,
+    must_change_password BOOLEAN DEFAULT TRUE NOT NULL,
+    failed_attempts INTEGER DEFAULT 0 NOT NULL,
+    locked_until TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
+  )`;
+  await sql`CREATE UNIQUE INDEX IF NOT EXISTS student_portal_account_idx
+    ON student_portal_accounts (student_code, class_name)`;
   await sql`CREATE TABLE IF NOT EXISTS student_attendance (
     id SERIAL PRIMARY KEY,
     student_code TEXT NOT NULL,
